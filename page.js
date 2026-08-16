@@ -20,11 +20,11 @@ const CONFIG = {
 // files (e.g. icons/moods/penguin-angry.png) if you'd like to use
 // real Pingu screenshots you already have saved.
 const MOOD_ICONS = {
-  angry:    { src: "icons/moods/penguin-angry.svg",    alt: "an annoyed little penguin",              label: "angry" },
-  sad:      { src: "icons/moods/penguin-sad.svg",       alt: "a sad little penguin",                   label: "sad" },
-  homesick: { src: "icons/moods/penguin-homesick.svg", alt: "a wistful penguin looking toward home",  label: "homesick" },
-  happy:    { src: "icons/moods/penguin-happy.svg",     alt: "a cheerful penguin with open flippers",  label: "happy hehe" },
-  general:  { src: "icons/moods/seal-general.svg",      alt: "a seal, just like Robby",                label: "i love you!" }
+  angry:    { src: "icons/moods/penguin-angry.jpeg",    alt: "an annoyed little penguin",              label: "angry" },
+  sad:      { src: "icons/moods/penguin-sad.jpeg",       alt: "a sad little penguin",                   label: "sad" },
+  homesick: { src: "icons/moods/penguin-homesick.jpeg", alt: "a wistful penguin looking toward home",  label: "homesick" },
+  happy:    { src: "icons/moods/penguin-happy.jpg",     alt: "a cheerful penguin with open flippers",  label: "happy hehe" },
+  general:  { src: "icons/moods/seal-general.jpeg",      alt: "a seal, just like Robby",                label: "i love you!" }
 };
 
 // ───────────────────────── Countdown + progress bar ─────────────────────────
