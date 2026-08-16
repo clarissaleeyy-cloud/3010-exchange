@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────
 const CONFIG = {
   // From your Google Sheet's URL: docs.google.com/spreadsheets/d/THIS_PART/edit#gid=THAT_PART
-  SHEET_ID: "1g-WNjrLxEmLLx_iFH-IjdopP-n4na6kc0xiWloDWxnQ",
+  SHEET_ID: "PASTE_YOUR_SHEET_ID_HERE",
   SHEET_GID: "0", // the gid= number for the specific tab (0 is usually the first tab)
 
   TARGET_DATE_ISO: "2027-01-09T07:55:00+08:00", // 9 Jan 2027, 7:55am SGT — when you meet again
@@ -100,8 +100,14 @@ function parseNoteDate(str){
   if (monIdx < 0 || !day) return null;
 
   const start = new Date(CONFIG.START_DATE_ISO);
+  const target = new Date(CONFIG.TARGET_DATE_ISO);
   let year = start.getFullYear();
-  if (monIdx < start.getMonth()) year += 1; // wrapped into the following year (e.g. January)
+  // only bump to the target's year if this month matches the target's month
+  // (e.g. a January note during a Sept–Jan exchange) — anything else stays
+  // in the start year, even if its month number is numerically smaller
+  if (monIdx === target.getMonth() && target.getFullYear() !== start.getFullYear()){
+    year = target.getFullYear();
+  }
   return new Date(year, monIdx, day);
 }
 
@@ -226,9 +232,14 @@ function renderCalendar(){
       const showTooltip = () => {
         const tip = document.getElementById('calendar-tooltip');
         const dateLabel = new Date(year, month, day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        const messageText = notes.map(n => n.message).join(' \u2014 ');
-        tip.innerHTML = `<p class="ct-date">${dateLabel}</p><p class="ct-message"></p>`;
-        tip.querySelector('.ct-message').textContent = messageText;
+        let html = `<p class="ct-date">${dateLabel}</p>`;
+        notes.forEach((n, idx) => {
+          if (idx > 0) html += `<hr class="ct-divider">`;
+          html += `<p class="ct-message"></p>`;
+        });
+        tip.innerHTML = html;
+        const msgEls = tip.querySelectorAll('.ct-message');
+        notes.forEach((n, idx) => { msgEls[idx].textContent = n.message; });
         const rect = cell.getBoundingClientRect();
         tip.style.left = Math.min(rect.left, window.innerWidth - 260) + 'px';
         tip.style.top = (rect.bottom + 8) + 'px';
