@@ -45,10 +45,9 @@
           <p class="note-date" id="note-date"></p>
         </div>
 
-        <button class="prev-toggle" id="prev-toggle" type="button" aria-expanded="false">
+        <button class="prev-toggle" id="view-calendar-btn" type="button">
           earlier notes
         </button>
-        <ul class="prev-list" id="prev-list" hidden></ul>
 
         <button class="letterbox-btn" id="open-letterbox" type="button">
           <svg class="flag-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><line x1="6" y1="2" x2="6" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polygon points="6,3 6,10 16,6.5" fill="currentColor"/><ellipse cx="6" cy="21.5" rx="6" ry="1.4" fill="currentColor" opacity="0.3"/></svg>
@@ -90,7 +89,33 @@
       </div>
     </section>
 
+    <!-- CALENDAR VIEW -->
+    <section id="view-calendar" class="view">
+      <div class="frame calendar-frame">
+        <button class="back-btn" data-back="view-home" type="button">
+          <svg class="flag-icon-sm" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><line x1="6" y1="2" x2="6" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polygon points="6,3 6,10 16,6.5" fill="currentColor"/><ellipse cx="6" cy="21.5" rx="6" ry="1.4" fill="currentColor" opacity="0.3"/></svg>
+          back
+        </button>
+        <h2 class="sub-headline">all your notes</h2>
+
+        <div class="calendar-header">
+          <button class="cal-nav" id="cal-prev" type="button" aria-label="previous month">&#8249;</button>
+          <p class="calendar-month-label" id="cal-month-label">Month Year</p>
+          <button class="cal-nav" id="cal-next" type="button" aria-label="next month">&#8250;</button>
+        </div>
+
+        <div class="calendar-weekdays">
+          <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
+
+        <p class="calendar-hint">tap or hover a highlighted date to read that day's note</p>
+      </div>
+    </section>
+
   </main>
+
+  <div class="calendar-tooltip" id="calendar-tooltip" hidden></div>
 
   <!-- golf ball transition overlay -->
   <div class="transition-overlay" id="transition-overlay" hidden>
@@ -111,7 +136,7 @@
     <p>🐧 &amp; 🦭 &middot; sealed with love</p>
   </footer>
 
-  <script src="messages.js?v=2"></script>
-  <script src="page.js?v=2"></script>
+  <script src="messages.js?v=3"></script>
+  <script src="page.js?v=3"></script>
 </body>
 </html>
