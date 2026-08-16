@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>seeing you again soon!</title>
+<link rel="stylesheet" href="page.css">
+</head>
+<body>
+
+  <div class="sky"></div>
+  <div class="snow" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="site-header-inner">
+      <span class="site-logo">💛 seeing you again soon</span>
+    </div>
+  </header>
+
+  <main class="stage">
+
+    <!-- HOME VIEW -->
+    <section id="view-home" class="view is-active">
+      <div class="frame">
+        <p class="eyebrow">Singapore &mdash; America</p>
+        <h1 class="headline">seeing you again soon!</h1>
+        <img class="pals" src="icons/pals-illustration.svg" alt="a little penguin and seal sitting together on an ice floe" />
+        <p class="target-date">9 January 2027 &middot; 7:55am SGT</p>
+
+        <div class="countdown" id="countdown" aria-live="polite">
+          <div class="unit"><span class="num" id="cd-days">00</span><span class="label">days</span></div>
+          <div class="unit"><span class="num" id="cd-hours">00</span><span class="label">hrs</span></div>
+          <div class="unit"><span class="num" id="cd-mins">00</span><span class="label">min</span></div>
+          <div class="unit"><span class="num" id="cd-secs">00</span><span class="label">sec</span></div>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+          <p class="progress-pct" id="progress-pct">0% of the wait done</p>
+        </div>
+
+        <div class="note-card" id="note-card">
+          <p class="note-eyebrow">you've got mail!!</p>
+          <p class="note-body" id="note-body">Loading&hellip;</p>
+          <p class="note-date" id="note-date"></p>
+        </div>
+
+        <button class="prev-toggle" id="prev-toggle" type="button" aria-expanded="false">
+          earlier notes
+        </button>
+        <ul class="prev-list" id="prev-list" hidden></ul>
+
+        <button class="letterbox-btn" id="open-letterbox" type="button">
+          <svg class="flag-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><line x1="6" y1="2" x2="6" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polygon points="6,3 6,10 16,6.5" fill="currentColor"/><ellipse cx="6" cy="21.5" rx="6" ry="1.4" fill="currentColor" opacity="0.3"/></svg>
+          messages for you
+        </button>
+
+        <div class="love-section">
+          <button class="send-love-btn" id="send-love-btn" type="button" aria-label="send love">💛</button>
+          <p class="love-count-label"><span id="love-count">—</span> loves sent</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- MOOD SELECT VIEW -->
+    <section id="view-mood" class="view">
+      <div class="frame">
+        <button class="back-btn" data-back="view-home" type="button">
+          <svg class="flag-icon-sm" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><line x1="6" y1="2" x2="6" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polygon points="6,3 6,10 16,6.5" fill="currentColor"/><ellipse cx="6" cy="21.5" rx="6" ry="1.4" fill="currentColor" opacity="0.3"/></svg>
+          back
+        </button>
+        <h2 class="sub-headline">choose a message based on how you're feeling!</h2>
+        <div class="mood-grid" id="mood-grid"></div>
+      </div>
+    </section>
+
+    <!-- ENVELOPES VIEW -->
+    <section id="view-envelopes" class="view">
+      <div class="frame">
+        <button class="back-btn" data-back="view-mood" type="button">
+          <svg class="flag-icon-sm" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><line x1="6" y1="2" x2="6" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><polygon points="6,3 6,10 16,6.5" fill="currentColor"/><ellipse cx="6" cy="21.5" rx="6" ry="1.4" fill="currentColor" opacity="0.3"/></svg>
+          back
+        </button>
+        <h2 class="sub-headline" id="envelopes-title">pick an envelope</h2>
+        <div class="envelope-grid" id="envelope-grid"></div>
+        <div class="letter-reveal" id="letter-reveal" hidden>
+          <p class="letter-text" id="letter-text"></p>
+          <button class="close-letter" id="close-letter" type="button">seal it back up</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- golf ball transition overlay -->
+  <div class="transition-overlay" id="transition-overlay" hidden>
+    <svg viewBox="0 0 400 160" class="transition-svg" preserveAspectRatio="xMidYMid meet">
+      <line x1="0" y1="130" x2="400" y2="130" stroke="#8a9c72" stroke-width="2" opacity="0.5"/>
+      <ellipse cx="330" cy="130" rx="13" ry="5" fill="#2b3a2b"/>
+      <line x1="330" y1="130" x2="330" y2="76" stroke="#6b4a2a" stroke-width="3"/>
+      <polygon points="330,76 330,92 358,84" fill="#c15b4a"/>
+      <g id="golf-club">
+        <line x1="30" y1="46" x2="30" y2="118" stroke="#4a4f63" stroke-width="3" stroke-linecap="round"/>
+        <rect x="23" y="112" width="15" height="10" rx="2" fill="#2b2b2b"/>
+      </g>
+      <circle id="golf-ball" cx="30" cy="122" r="8" fill="#fffdf6" stroke="#d8d2bd" stroke-width="1"/>
+    </svg>
+  </div>
+
+  <footer class="site-footer">
+    <p>🐧 &amp; 🦭 &middot; sealed with love</p>
+  </footer>
+
+  <script src="messages.js"></script>
+  <script src="page.js"></script>
+</body>
+</html>

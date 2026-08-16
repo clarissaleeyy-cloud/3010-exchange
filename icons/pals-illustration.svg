@@ -1,0 +1,32 @@
+<svg viewBox="0 0 220 90" xmlns="http://www.w3.org/2000/svg">
+  <!-- ice floe -->
+  <ellipse cx="110" cy="78" rx="100" ry="14" fill="#e7ebf2" opacity="0.9"/>
+  <ellipse cx="110" cy="76" rx="100" ry="10" fill="#f7f9fc"/>
+
+  <!-- seal (Robby stand-in), front and center -->
+  <g transform="translate(95,26)">
+    <ellipse cx="20" cy="34" rx="26" ry="20" fill="#aab4c8"/>
+    <ellipse cx="20" cy="14" rx="17" ry="15" fill="#aab4c8"/>
+    <ellipse cx="20" cy="18" rx="10" ry="8" fill="#e7ebf2"/>
+    <circle cx="14" cy="12" r="3.2" fill="#232a44"/>
+    <circle cx="26" cy="12" r="3.2" fill="#232a44"/>
+    <ellipse cx="20" cy="18" rx="2.6" ry="2" fill="#4a4f63"/>
+    <path d="M8 10 L-4 7" stroke="#4a4f63" stroke-width="1.2"/>
+    <path d="M8 14 L-4 16" stroke="#4a4f63" stroke-width="1.2"/>
+    <path d="M32 10 L44 7" stroke="#4a4f63" stroke-width="1.2"/>
+    <path d="M32 14 L44 16" stroke="#4a4f63" stroke-width="1.2"/>
+  </g>
+
+  <!-- little penguin buddy beside him -->
+  <g transform="translate(40,32)">
+    <ellipse cx="20" cy="30" rx="18" ry="22" fill="#232a44"/>
+    <ellipse cx="20" cy="36" rx="11" ry="14" fill="#f2ede0"/>
+    <circle cx="14" cy="18" r="3.4" fill="#f2ede0"/>
+    <circle cx="26" cy="18" r="3.4" fill="#f2ede0"/>
+    <circle cx="14" cy="18.5" r="1.4" fill="#232a44"/>
+    <circle cx="26" cy="18.5" r="1.4" fill="#232a44"/>
+    <path d="M15 25 Q20 29 25 25" stroke="#d9a548" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="8" cy="46" rx="4.5" ry="3" fill="#d9a548"/>
+    <ellipse cx="32" cy="46" rx="4.5" ry="3" fill="#d9a548"/>
+  </g>
+</svg>
