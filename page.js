@@ -20,11 +20,11 @@ const CONFIG = {
 // files (e.g. icons/moods/penguin-angry.png) if you'd like to use
 // real Pingu screenshots you already have saved.
 const MOOD_ICONS = {
-  angry:    { src: "icons/moods/penguin-angry.jpeg",    alt: "an annoyed little penguin",              label: "angry" },
-  sad:      { src: "icons/moods/penguin-sad.jpeg",       alt: "a sad little penguin",                   label: "sad" },
-  homesick: { src: "icons/moods/penguin-homesick.jpeg", alt: "a wistful penguin looking toward home",  label: "homesick" },
-  happy:    { src: "icons/moods/penguin-happy.jpg",     alt: "a cheerful penguin with open flippers",  label: "happy hehe" },
-  general:  { src: "icons/moods/seal-general.jpeg",      alt: "a seal, just like Robby",                label: "i love you!" }
+  angry:    { src: "icons/moods/penguin-angry.svg",    alt: "an annoyed little penguin",              label: "angry" },
+  sad:      { src: "icons/moods/penguin-sad.svg",       alt: "a sad little penguin",                   label: "sad" },
+  homesick: { src: "icons/moods/penguin-homesick.svg", alt: "a wistful penguin looking toward home",  label: "homesick" },
+  happy:    { src: "icons/moods/penguin-happy.svg",     alt: "a cheerful penguin with open flippers",  label: "happy hehe" },
+  general:  { src: "icons/moods/seal-general.svg",      alt: "a seal, just like Robby",                label: "i love you!" }
 };
 
 // ───────────────────────── Countdown + progress bar ─────────────────────────
@@ -79,8 +79,40 @@ function parseCSV(text){
   return rows.filter(r => r.some(cell => cell.trim() !== ''));
 }
 
+// notes with parsed JS Date objects, kept for the calendar view
+let ALL_NOTES = [];
+
+function parseNoteDate(str){
+  if (!str) return null;
+  str = str.trim();
+  // try a direct parse first (handles "2027-01-05", "Jan 5 2027", etc.)
+  let d = new Date(str);
+  if (!isNaN(d.getTime())) return d;
+
+  // fall back to "14 Aug" / "Aug 14" style with no year — infer the year
+  // from the START_DATE_ISO / TARGET_DATE_ISO window in CONFIG
+  const months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const m = str.toLowerCase().match(/(\d{1,2})[a-z]*\s+([a-z]{3,})|([a-z]{3,})\s+(\d{1,2})/);
+  if (!m) return null;
+  const day = parseInt(m[1] || m[4], 10);
+  const monStr = m[2] || m[3];
+  const monIdx = months.findIndex(mo => monStr.startsWith(mo));
+  if (monIdx < 0 || !day) return null;
+
+  const start = new Date(CONFIG.START_DATE_ISO);
+  let year = start.getFullYear();
+  if (monIdx < start.getMonth()) year += 1; // wrapped into the following year (e.g. January)
+  return new Date(year, monIdx, day);
+}
+
 function renderNotes(rows){
   const dataRows = rows.slice(1).filter(r => r[1] && r[1].trim());
+  ALL_NOTES = dataRows.map(r => ({
+    dateStr: r[0] || '',
+    message: r[1],
+    date: parseNoteDate(r[0])
+  }));
+
   if (!dataRows.length){
     document.getElementById('note-body').textContent = "No notes yet — add one to your sheet!";
     document.getElementById('note-date').textContent = "";
@@ -89,20 +121,6 @@ function renderNotes(rows){
   const latest = dataRows[dataRows.length - 1];
   document.getElementById('note-body').textContent = latest[1];
   document.getElementById('note-date').textContent = latest[0] || "";
-
-  const prevList = document.getElementById('prev-list');
-  prevList.innerHTML = '';
-  const earlier = dataRows.slice(0, -1).reverse();
-  earlier.forEach(r => {
-    const li = document.createElement('li');
-    const dateSpan = document.createElement('span');
-    dateSpan.className = 'pl-date';
-    dateSpan.textContent = r[0] || '';
-    li.appendChild(dateSpan);
-    li.appendChild(document.createTextNode(r[1]));
-    prevList.appendChild(li);
-  });
-  document.getElementById('prev-toggle').style.display = earlier.length ? '' : 'none';
 }
 
 function sheetCsvUrl(){
@@ -143,12 +161,108 @@ async function loadNotes(){
 loadNotes();
 setInterval(loadNotes, 60 * 1000); // recheck the sheet every minute without needing a refresh
 
-document.getElementById('prev-toggle').addEventListener('click', (e) => {
-  const list = document.getElementById('prev-list');
-  const expanded = e.target.getAttribute('aria-expanded') === 'true';
-  list.hidden = expanded;
-  e.target.setAttribute('aria-expanded', String(!expanded));
-  e.target.textContent = expanded ? 'earlier notes' : 'hide earlier notes';
+document.getElementById('view-calendar-btn').addEventListener('click', () => {
+  calendarMonth = latestNotesMonth();
+  transitionToView('view-calendar');
+  renderCalendar();
+});
+
+// ───────────────────────── Calendar view ─────────────────────────
+let calendarMonth = new Date(); // first-of-month Date currently displayed
+
+function latestNotesMonth(){
+  const dated = ALL_NOTES.filter(n => n.date);
+  if (!dated.length) return new Date();
+  const latest = dated[dated.length - 1].date;
+  return new Date(latest.getFullYear(), latest.getMonth(), 1);
+}
+
+function dateKey(d){
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+function renderCalendar(){
+  const label = calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  document.getElementById('cal-month-label').textContent = label;
+
+  // group notes for this month by day
+  const notesByDay = {};
+  ALL_NOTES.forEach(n => {
+    if (!n.date) return;
+    if (n.date.getFullYear() === calendarMonth.getFullYear() && n.date.getMonth() === calendarMonth.getMonth()){
+      const key = dateKey(n.date);
+      if (!notesByDay[key]) notesByDay[key] = [];
+      notesByDay[key].push(n);
+    }
+  });
+
+  const year = calendarMonth.getFullYear();
+  const month = calendarMonth.getMonth();
+  const firstWeekday = new Date(year, month, 1).getDay(); // 0 = Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = new Date();
+
+  const grid = document.getElementById('calendar-grid');
+  grid.innerHTML = '';
+
+  for (let i = 0; i < firstWeekday; i++){
+    const empty = document.createElement('div');
+    empty.className = 'cal-day is-empty';
+    grid.appendChild(empty);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++){
+    const cell = document.createElement('div');
+    cell.className = 'cal-day';
+    cell.textContent = day;
+
+    const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
+    if (isToday) cell.classList.add('is-today');
+
+    const key = `${year}-${month}-${day}`;
+    const notes = notesByDay[key];
+    if (notes && notes.length){
+      cell.classList.add('has-note');
+      const showTooltip = () => {
+        const tip = document.getElementById('calendar-tooltip');
+        const dateLabel = new Date(year, month, day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const messageText = notes.map(n => n.message).join(' \u2014 ');
+        tip.innerHTML = `<p class="ct-date">${dateLabel}</p><p class="ct-message"></p>`;
+        tip.querySelector('.ct-message').textContent = messageText;
+        const rect = cell.getBoundingClientRect();
+        tip.style.left = Math.min(rect.left, window.innerWidth - 260) + 'px';
+        tip.style.top = (rect.bottom + 8) + 'px';
+        tip.hidden = false;
+      };
+      const hideTooltip = () => { document.getElementById('calendar-tooltip').hidden = true; };
+
+      cell.addEventListener('mouseenter', showTooltip);
+      cell.addEventListener('mouseleave', hideTooltip);
+      cell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const alreadyActive = cell.classList.contains('is-active');
+        document.querySelectorAll('.cal-day.is-active').forEach(el => el.classList.remove('is-active'));
+        if (alreadyActive){ hideTooltip(); }
+        else { cell.classList.add('is-active'); showTooltip(); }
+      });
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+document.addEventListener('click', () => {
+  document.getElementById('calendar-tooltip').hidden = true;
+  document.querySelectorAll('.cal-day.is-active').forEach(el => el.classList.remove('is-active'));
+});
+
+document.getElementById('cal-prev').addEventListener('click', () => {
+  calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1);
+  renderCalendar();
+});
+document.getElementById('cal-next').addEventListener('click', () => {
+  calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1);
+  renderCalendar();
 });
 
 // ───────────────────────── Send love counter ─────────────────────────
