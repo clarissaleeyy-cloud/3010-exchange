@@ -13,18 +13,12 @@ const MOOD_MESSAGES = {
     { label: "Letter 3", text: "And another." }
   ],
   sad: [
-    { label: "Letter 1", text: "WHY ARE YOU SAD! please tell me more. but here’s another (bad) joke! why is golf so addictive?
-
-it’s a HOLE lot of fun :D hahahaha cheer up soon! sending a virtual hug rn~ " },
+    { label: "Letter 1", text: "WHY ARE YOU SAD! please tell me more. but here’s another (bad) joke! why is golf so addictive? it’s a HOLE lot of fun :D hahahaha cheer up soon! sending a virtual hug rn~ " },
     { label: "Letter 2", text: "THE COCONUT NUT IS A BIG BIG NUT IF U EAT TOO MUCH U GET VERY FAT " },
     { label: "Letter 3", text: "And another." }
   ],
   homesick: [
-    { label: "Letter 1", text: "here is a list of google map locations of asian supermarkets and asian food in cali HAHAHA time to shop/eat? heheh 
-
-https://maps.app.goo.gl/rwzjeaByvkrS1qmu8
-
-(after knowing where your uni housing is these places all seem FAR but UH i hope you figure it out.. HAHAHA)" },
+    { label: "Letter 1", text: "here is a list of google map locations of asian supermarkets and asian food in cali HAHAHA time to shop/eat? heheh https://maps.app.goo.gl/rwzjeaByvkrS1qmu8 (after knowing where your uni housing is these places all seem FAR but UH i hope you figure it out.. HAHAHA)" },
     { label: "Letter 2", text: "a little piece of home for u heheh HAHAHA go and watch the singaporean driving traffic videos !!! or hokkien videos about people cursing and laughing" },
     { label: "Letter 3", text: "And another." }
   ],
@@ -42,9 +36,7 @@ https://maps.app.goo.gl/rwzjeaByvkrS1qmu8
 	
 	{ label: "Letter 4", text: "at the rate i go i’m gg to run out of things to write in our anni card!! isit time to start listing things i don’t like? HAHAHA KIDDING! today i would like to say that there are sooo many things in my room that r from u HAHHA like without opening any cupboards or drawers i think u can already count like 5 things at least that were from u. heheh i love all ur many many gifts (even if they r sometimes random HAHAHA) i hope you have a whole luggage worth of gifts for me!!! i love you am missing your presence rn :( where’s my huggie kissy!!!" }
 
-{ label: "Letter 5", text: "today i shall tell u a story! of my most embarrassing moment (when i peed myself in public) altho this is not very romantic… I THINK i have mentioned it before but maybe not in detail HAHAH so this happened when i was 12 years old!!! (already quite old so embarrassing..) and it was post-psle results release when they were giving out awards and certificates. so i REALLY needed to pee but we had to sing national anthem, school song, and listen to principal address wtv… but i COULDNT GO PEE cause i was one of the first few ppl to go up stage and get the award. so i was js HOLDING IT IN. and then i forgot when exactly i think might be during the sch song or smth… i cldnt hold it in anymore… and i peed… and once the floodgates opened i COULD NOT STOP. gosh… but thankgod no one looking during sch song right HAHA BUT IMMEDIATELY AFTER i was like fk fk ive got to cover it up somehow cause obv ppl realised there was WATER on the floor. so i spilt my bottle “accidentally” and was like ohno!!! lemme clean this up !!! (thank god the floor was like not white / my pee was not too yellow gosh). then uk somehow i forgot why the PARENTS came to help clean. like i think my mom and scott’s mom? (unless my memory is trolling me) were helping me clear up and i was js thinking fkfkfk i hope they dont realise it’s DILUTED PEEEEE. anw then my skirt WET RIGHT. but i was like ohno my water spill on my skirt so i went to the toilet to “clean it up” and i was like trying to dry my skirt w the handdryer… anw it was really rabz… and now looking back on it i feel like the parents probably knew what was going on because no way right HAHAHA but i’m glad no one ever called me out for it and now it’s just a secret i’ll take to my grave…
-
-okie that was not v romantic i guess but this is my yappy yap of the day!!! as always i miss u my love for u is bursting just like my bladder HAHAHAHAH kidding muacksies!!! " }
+{ label: "Letter 5", text: "today i shall tell u a story! of my most embarrassing moment (when i peed myself in public) altho this is not very romantic… I THINK i have mentioned it before but maybe not in detail HAHAH so this happened when i was 12 years old!!! (already quite old so embarrassing..) and it was post-psle results release when they were giving out awards and certificates. so i REALLY needed to pee but we had to sing national anthem, school song, and listen to principal address wtv… but i COULDNT GO PEE cause i was one of the first few ppl to go up stage and get the award. so i was js HOLDING IT IN. and then i forgot when exactly i think might be during the sch song or smth… i cldnt hold it in anymore… and i peed… and once the floodgates opened i COULD NOT STOP. gosh… but thankgod no one looking during sch song right HAHA BUT IMMEDIATELY AFTER i was like fk fk ive got to cover it up somehow cause obv ppl realised there was WATER on the floor. so i spilt my bottle “accidentally” and was like ohno!!! lemme clean this up !!! (thank god the floor was like not white / my pee was not too yellow gosh). then uk somehow i forgot why the PARENTS came to help clean. like i think my mom and scott’s mom? (unless my memory is trolling me) were helping me clear up and i was js thinking fkfkfk i hope they dont realise it’s DILUTED PEEEEE. anw then my skirt WET RIGHT. but i was like ohno my water spill on my skirt so i went to the toilet to “clean it up” and i was like trying to dry my skirt w the handdryer… anw it was really rabz… and now looking back on it i feel like the parents probably knew what was going on because no way right HAHAHA but i’m glad no one ever called me out for it and now it’s just a secret i’ll take to my grave… okie that was not v romantic i guess but this is my yappy yap of the day!!! as always i miss u my love for u is bursting just like my bladder HAHAHAHAH kidding muacksies!!! " }
 
 	{ label: "Letter 6", text: "replace this" }
 	{ label: "Letter 7", text: "replace this" }
