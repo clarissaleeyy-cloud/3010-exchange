@@ -245,9 +245,10 @@ html,body{
 }
 
 .note-body{
-  font-family: var(--display);
-  font-size: 20px;
-  line-height: 1.45;
+  font-family: var(--sf);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.5;
   margin: 0 0 8px;
   color: var(--ink);
 }

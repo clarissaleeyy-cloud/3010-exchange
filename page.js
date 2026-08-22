@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────
 const CONFIG = {
   // From your Google Sheet's URL: docs.google.com/spreadsheets/d/THIS_PART/edit#gid=THAT_PART
-  SHEET_ID: "1g-WNjrLxEmLLx_iFH-IjdopP-n4na6kc0xiWloDWxnQ",
+  SHEET_ID: "PASTE_YOUR_SHEET_ID_HERE",
   SHEET_GID: "0", // the gid= number for the specific tab (0 is usually the first tab)
 
   TARGET_DATE_ISO: "2027-01-09T07:55:00+08:00", // 9 Jan 2027, 7:55am SGT — when you meet again
@@ -17,8 +17,9 @@ const CONFIG = {
 };
 
 // Mood icon artwork + display labels. Swap paths for your own image
-// files (e.g. icons/moods/penguin-angry.png) if you'd like to use
-// real Pingu screenshots you already have saved.
+// files (e.g. icons/moods/penguin-angry.jpeg) if you'd like to use
+// real Pingu screenshots you already have saved — just make sure the
+// filenames below match exactly (including .jpeg vs .jpg).
 const MOOD_ICONS = {
   angry:    { src: "icons/moods/penguin-angry.jpeg",    alt: "an annoyed little penguin",              label: "angry" },
   sad:      { src: "icons/moods/penguin-sad.jpeg",       alt: "a sad little penguin",                   label: "sad" },
