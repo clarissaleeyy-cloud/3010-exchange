@@ -13,7 +13,20 @@ const CONFIG = {
   // Change LOVE_NAMESPACE to something unique to you two so your count
   // doesn't mix with anyone else's — e.g. "yourname-bfname-2026".
   LOVE_NAMESPACE: "seeing-you-again-soon-CHANGE-ME",
-  LOVE_COUNTER: "send-love"
+  LOVE_COUNTER: "send-love",
+
+  // Push notification when either of you taps "send love" — uses ntfy.sh,
+  // a free no-signup push service. Change this to something unique to you
+  // two (nobody else should be able to guess it), then both of you install
+  // the ntfy app (iOS/Android) and subscribe to this exact topic name.
+  NTFY_TOPIC: "seeing-you-again-soon-love-CHANGE-ME",
+
+  // His location, for the timezone clock and weather widget — change all
+  // four of these to match his actual city.
+  HIS_CITY_NAME: "his city",
+  HIS_TIMEZONE: "America/Los_Angeles", // pick from: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  HIS_LAT: 34.0522,
+  HIS_LON: -118.2437
 };
 
 // Mood icon artwork + display labels. Swap paths for your own image
@@ -21,12 +34,53 @@ const CONFIG = {
 // real Pingu screenshots you already have saved — just make sure the
 // filenames below match exactly (including .jpeg vs .jpg).
 const MOOD_ICONS = {
-  angry:    { src: "icons/moods/penguin-angry.jpeg",    alt: "an annoyed little penguin",              label: "angry" },
+  surprise: { src: "icons/moods/penguin-angry.jpeg",    alt: "a mystery penguin",                      label: "surprise me" },
   sad:      { src: "icons/moods/penguin-sad.jpeg",       alt: "a sad little penguin",                   label: "sad" },
   homesick: { src: "icons/moods/penguin-homesick.jpeg", alt: "a wistful penguin looking toward home",  label: "homesick" },
   happy:    { src: "icons/moods/penguin-happy.jpg",     alt: "a cheerful penguin with open flippers",  label: "happy hehe" },
   general:  { src: "icons/moods/seal-general.jpeg",      alt: "a seal, just like Robby",                label: "i love you!" }
 };
+
+// ───────────────────────── Timezone clock + weather ─────────────────────────
+function updateClocks(){
+  const now = new Date();
+  const sgTime = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Singapore', hour: '2-digit', minute: '2-digit' });
+  const hisTime = now.toLocaleTimeString('en-US', { timeZone: CONFIG.HIS_TIMEZONE, hour: '2-digit', minute: '2-digit' });
+  document.getElementById('tz-time-sg').textContent = sgTime;
+  document.getElementById('tz-time-his').textContent = hisTime;
+}
+document.getElementById('his-city-label').textContent = CONFIG.HIS_CITY_NAME;
+updateClocks();
+setInterval(updateClocks, 30 * 1000);
+
+function weatherCodeToText(code){
+  const map = {
+    0: '\u2600\ufe0f clear', 1: '\ud83c\udf24\ufe0f mostly clear', 2: '\u26c5 partly cloudy', 3: '\u2601\ufe0f cloudy',
+    45: '\ud83c\udf2b\ufe0f foggy', 48: '\ud83c\udf2b\ufe0f foggy',
+    51: '\ud83c\udf26\ufe0f light drizzle', 53: '\ud83c\udf26\ufe0f drizzle', 55: '\ud83c\udf27\ufe0f heavy drizzle',
+    61: '\ud83c\udf27\ufe0f light rain', 63: '\ud83c\udf27\ufe0f rain', 65: '\ud83c\udf27\ufe0f heavy rain',
+    71: '\ud83c\udf28\ufe0f light snow', 73: '\ud83c\udf28\ufe0f snow', 75: '\u2744\ufe0f heavy snow',
+    80: '\ud83c\udf26\ufe0f showers', 81: '\ud83c\udf27\ufe0f showers', 82: '\u26c8\ufe0f violent showers',
+    95: '\u26c8\ufe0f thunderstorm'
+  };
+  return map[code] || '\ud83c\udf21\ufe0f';
+}
+
+async function loadHisWeather(){
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.HIS_LAT}&longitude=${CONFIG.HIS_LON}&current_weather=true&temperature_unit=fahrenheit`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('weather fetch failed');
+    const data = await res.json();
+    const cw = data.current_weather;
+    document.getElementById('his-weather').textContent = `${Math.round(cw.temperature)}\u00b0F ${weatherCodeToText(cw.weathercode)}`;
+  } catch (err){
+    console.error('Could not load weather:', err);
+    document.getElementById('his-weather').textContent = 'weather unavailable';
+  }
+}
+loadHisWeather();
+setInterval(loadHisWeather, 15 * 60 * 1000);
 
 // ───────────────────────── Countdown + progress bar ─────────────────────────
 function updateCountdown(){
@@ -306,10 +360,22 @@ async function loadLoveCount(){
 }
 loadLoveCount();
 
+function sendLoveNotification(){
+  // fire-and-forget push notification via ntfy.sh — both of you need the
+  // ntfy app installed and subscribed to CONFIG.NTFY_TOPIC for this to
+  // actually reach your phones
+  fetch(`https://ntfy.sh/${CONFIG.NTFY_TOPIC}`, {
+    method: 'POST',
+    body: 'sent you some love \ud83d\udc9b',
+    headers: { 'Title': 'seeing you again soon' }
+  }).catch(err => console.error('Could not send push notification:', err));
+}
+
 document.getElementById('send-love-btn').addEventListener('click', async () => {
   const btn = document.getElementById('send-love-btn');
   btn.classList.add('is-sending');
   setTimeout(() => btn.classList.remove('is-sending'), 400);
+  sendLoveNotification();
   try {
     const res = await fetch(loveApiUrl('up'));
     const data = await res.json();
@@ -368,7 +434,7 @@ document.querySelectorAll('[data-back]').forEach(btn => {
 });
 
 // ───────────────────────── Mood grid ─────────────────────────
-const MOODS = ['angry', 'sad', 'homesick', 'happy', 'general'];
+const MOODS = ['surprise', 'sad', 'homesick', 'happy', 'general'];
 const moodGrid = document.getElementById('mood-grid');
 MOODS.forEach(mood => {
   const btn = document.createElement('button');
@@ -385,13 +451,88 @@ MOODS.forEach(mood => {
 
   btn.appendChild(img);
   btn.appendChild(label);
-  btn.addEventListener('click', () => openMood(mood));
+  btn.addEventListener('click', () => {
+    if (mood === 'surprise') openSurprise();
+    else openMood(mood);
+  });
   moodGrid.appendChild(btn);
 });
 
+// picks one random letter from every mood combined and reveals it right away
+function openSurprise(){
+  const allLetters = (typeof MOOD_MESSAGES !== 'undefined')
+    ? Object.values(MOOD_MESSAGES).flat()
+    : [];
+  if (!allLetters.length) return;
+
+  const pick = allLetters[Math.floor(Math.random() * allLetters.length)];
+
+  document.getElementById('envelopes-title').textContent = `surprise! here's one for you \u2014`;
+  const bubble = document.getElementById('mood-speech-bubble');
+  if (bubble) bubble.hidden = true;
+
+  const grid = document.getElementById('envelope-grid');
+  grid.innerHTML = '';
+
+  document.getElementById('letter-text').innerHTML = formatLetterText(pick.text);
+  renderLetterMedia(pick);
+  document.getElementById('letter-reveal').hidden = false;
+
+  if (pick.effect === 'hearts') spawnHearts();
+  if (pick.effect === 'fireworks') spawnFireworks();
+
+  transitionToView('view-envelopes');
+}
+
+// ───────────────────────── Letter content helpers ─────────────────────────
+function escapeHTML(str){
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// turns plain message text into safe HTML: escapes it, auto-links any URLs,
+// and turns blank-line breaks into paragraphs (single line breaks into <br>)
+function formatLetterText(text){
+  const escaped = escapeHTML(text);
+  const urlRegex = /(https?:\/\/[^\s<]+)/g;
+  const linked = escaped.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+  return linked
+    .split(/\n{2,}/)
+    .map(para => `<p>${para.replace(/\n/g, '<br>')}</p>`)
+    .join('');
+}
+
+function renderLetterMedia(env){
+  const wrap = document.getElementById('letter-media');
+  wrap.innerHTML = '';
+  if (env.photo){
+    const img = document.createElement('img');
+    img.src = env.photo;
+    img.alt = 'a photo for you';
+    img.className = 'letter-photo';
+    wrap.appendChild(img);
+  }
+  if (env.audio){
+    const audio = document.createElement('audio');
+    audio.src = env.audio;
+    audio.controls = true;
+    audio.className = 'letter-audio';
+    wrap.appendChild(audio);
+  }
+}
+
 function openMood(mood){
   const moodLabel = MOOD_ICONS[mood] ? MOOD_ICONS[mood].label : mood;
-  document.getElementById('envelopes-title').textContent = `for when you're feeling ${moodLabel} \u2014 pick one`;
+  const titleText = mood === 'general'
+    ? `for when you love me (which should be always right)`
+    : `for when you're feeling ${moodLabel} \u2014 pick one`;
+  document.getElementById('envelopes-title').textContent = titleText;
+
+  const bubble = document.getElementById('mood-speech-bubble');
+  if (bubble) bubble.hidden = mood !== 'general';
+
   const grid = document.getElementById('envelope-grid');
   grid.innerHTML = '';
   document.getElementById('letter-reveal').hidden = true;
@@ -411,10 +552,14 @@ function openMood(mood){
     btn.appendChild(img);
     btn.appendChild(label);
     btn.addEventListener('click', () => {
-      document.getElementById('letter-text').textContent = env.text;
+      document.getElementById('letter-text').innerHTML = formatLetterText(env.text);
+      renderLetterMedia(env);
       document.getElementById('letter-reveal').hidden = false;
       btn.classList.add('is-opened');
       document.getElementById('letter-reveal').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      if (env.effect === 'hearts') spawnHearts();
+      if (env.effect === 'fireworks') spawnFireworks();
     });
     grid.appendChild(btn);
   });
@@ -423,5 +568,114 @@ function openMood(mood){
 }
 
 document.getElementById('close-letter').addEventListener('click', () => {
-  document.getElementById('letter-reveal').hidden = true;
+  playSealSplash(() => {
+    document.getElementById('letter-reveal').hidden = true;
+  });
 });
+
+// ───────────────────────── Special letter effects ─────────────────────────
+function spawnHearts(){
+  const container = document.createElement('div');
+  container.className = 'hearts-burst';
+  const count = 20;
+  for (let i = 0; i < count; i++){
+    const heart = document.createElement('span');
+    heart.className = 'heart-particle';
+    heart.textContent = '❤️';
+    heart.style.left = (Math.random() * 92 + 4) + '%';
+    heart.style.fontSize = (14 + Math.random() * 18) + 'px';
+    heart.style.animationDelay = (Math.random() * 0.7) + 's';
+    heart.style.animationDuration = (3.6 + Math.random() * 1.4) + 's';
+    container.appendChild(heart);
+  }
+  document.body.appendChild(container);
+  setTimeout(() => container.remove(), 5000);
+}
+
+function spawnFireworks(){
+  const container = document.createElement('div');
+  container.className = 'fireworks-burst';
+  document.body.appendChild(container);
+  const colors = ['#d9a548', '#c15b4a', '#4a72a8', '#8faa73', '#fff2c4', '#e28fc0', '#5fc2c9', '#f2f2f2'];
+  const bursts = 7;
+  for (let b = 0; b < bursts; b++){
+    setTimeout(() => {
+      const originX = 10 + Math.random() * 80;
+      const originY = 10 + Math.random() * 50;
+      const sparkCount = 26;
+      for (let i = 0; i < sparkCount; i++){
+        const spark = document.createElement('span');
+        spark.className = 'firework-spark';
+        const angle = (Math.PI * 2 * i) / sparkCount + Math.random() * 0.2;
+        const dist = 90 + Math.random() * 90;
+        const size = 7 + Math.random() * 6;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        spark.style.setProperty('--dx', (Math.cos(angle) * dist) + 'px');
+        spark.style.setProperty('--dy', (Math.sin(angle) * dist) + 'px');
+        spark.style.left = originX + 'vw';
+        spark.style.top = originY + 'vh';
+        spark.style.width = size + 'px';
+        spark.style.height = size + 'px';
+        spark.style.background = color;
+        spark.style.boxShadow = `0 0 10px 2px ${color}`;
+        container.appendChild(spark);
+      }
+    }, b * 300);
+  }
+  setTimeout(() => container.remove(), bursts * 300 + 1300);
+}
+
+// ───────────────────────── Seal-splash close animation ─────────────────────────
+function spawnSplashDroplets(){
+  const marker = document.getElementById('splash-point');
+  if (!marker) return;
+  const rect = marker.getBoundingClientRect();
+  const x = rect.left + rect.width / 2;
+  const y = rect.top + rect.height / 2;
+  const count = 12;
+  for (let i = 0; i < count; i++){
+    const d = document.createElement('span');
+    d.className = 'splash-droplet';
+    // spread mostly upward and outward, like water kicked up on impact
+    const theta = -Math.PI * (0.12 + Math.random() * 0.76);
+    const dist = 16 + Math.random() * 36;
+    const dx = Math.cos(theta) * dist;
+    const dy = Math.sin(theta) * dist;
+    const size = 4 + Math.random() * 5;
+    d.style.left = x + 'px';
+    d.style.top = y + 'px';
+    d.style.width = size + 'px';
+    d.style.height = size + 'px';
+    d.style.setProperty('--dx', dx.toFixed(1) + 'px');
+    d.style.setProperty('--dy', dy.toFixed(1) + 'px');
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 750);
+  }
+}
+
+function playSealSplash(callback){
+  if (prefersReducedMotion){
+    callback();
+    return;
+  }
+  const overlay = document.getElementById('seal-splash-overlay');
+  const seal = document.getElementById('seal-diver');
+  const ripples = ['ripple-1', 'ripple-2', 'ripple-3'].map(id => document.getElementById(id));
+
+  overlay.hidden = false;
+  overlay.classList.remove('is-playing');
+  seal.style.animation = 'none';
+  ripples.forEach(r => { if (r) r.style.animation = 'none'; });
+  void seal.offsetWidth; // force reflow
+  seal.style.animation = '';
+  ripples.forEach(r => { if (r) r.style.animation = ''; });
+  overlay.classList.add('is-playing');
+
+  setTimeout(spawnSplashDroplets, 420);
+
+  setTimeout(() => {
+    callback();
+    overlay.classList.remove('is-playing');
+    overlay.hidden = true;
+  }, 900);
+}

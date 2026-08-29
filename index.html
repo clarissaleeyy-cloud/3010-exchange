@@ -27,6 +27,18 @@
         <img class="pals" src="icons/pals-illustration.svg" alt="a little penguin and seal sitting together on an ice floe" />
         <p class="target-date">9 January 2027 &middot; 7:55am SGT</p>
 
+        <div class="tz-weather-row" id="tz-weather-row">
+          <div class="tz-card">
+            <p class="tz-city">singapore</p>
+            <p class="tz-time" id="tz-time-sg">--:--</p>
+          </div>
+          <div class="tz-card">
+            <p class="tz-city" id="his-city-label">his city</p>
+            <p class="tz-time" id="tz-time-his">--:--</p>
+            <p class="tz-weather" id="his-weather">weather loading&hellip;</p>
+          </div>
+        </div>
+
         <div class="countdown" id="countdown" aria-live="polite">
           <div class="unit"><span class="num" id="cd-days">00</span><span class="label">days</span></div>
           <div class="unit"><span class="num" id="cd-hours">00</span><span class="label">hrs</span></div>
@@ -81,9 +93,11 @@
           back
         </button>
         <h2 class="sub-headline" id="envelopes-title">pick an envelope</h2>
+        <div class="speech-bubble" id="mood-speech-bubble" hidden>more letters for this section because i thought you would be feeling this emotion more heheh</div>
         <div class="envelope-grid" id="envelope-grid"></div>
         <div class="letter-reveal" id="letter-reveal" hidden>
-          <p class="letter-text" id="letter-text"></p>
+          <div class="letter-text" id="letter-text"></div>
+          <div class="letter-media" id="letter-media"></div>
           <button class="close-letter" id="close-letter" type="button">seal it back up</button>
         </div>
       </div>
@@ -132,11 +146,40 @@
     </svg>
   </div>
 
+  <!-- seal splash overlay, played when closing a letter -->
+  <div class="seal-splash-overlay" id="seal-splash-overlay" hidden>
+    <svg viewBox="0 0 300 160" class="seal-splash-svg" preserveAspectRatio="xMidYMid meet">
+      <rect x="0" y="112" width="300" height="48" fill="#a9c6dd" opacity="0.55"/>
+      <line x1="0" y1="112" x2="300" y2="112" stroke="#7fa8c9" stroke-width="2"/>
+      <g id="seal-diver">
+        <!-- head -->
+        <ellipse cx="150" cy="16" rx="12" ry="11" fill="#aab4c8"/>
+        <circle cx="146" cy="14" r="1.5" fill="#232a44"/>
+        <circle cx="154" cy="14" r="1.5" fill="#232a44"/>
+        <ellipse cx="150" cy="19" rx="2.2" ry="1.6" fill="#4a4f63"/>
+        <!-- body -->
+        <ellipse cx="150" cy="38" rx="14" ry="19" fill="#aab4c8"/>
+        <!-- forked tail fluke -->
+        <path d="M150 55
+                 C141 60 132 59 121 68
+                 C132 66 141 65 148 61
+                 C149 72 151 72 152 61
+                 C159 65 168 66 179 68
+                 C168 59 159 60 150 55 Z" fill="#8b95ac"/>
+      </g>
+      <ellipse id="ripple-1" cx="150" cy="112" rx="12" ry="3.5" fill="none" stroke="#eaf3fa" stroke-width="2" opacity="0"/>
+      <ellipse id="ripple-2" cx="150" cy="112" rx="12" ry="3.5" fill="none" stroke="#eaf3fa" stroke-width="2" opacity="0"/>
+      <ellipse id="ripple-3" cx="150" cy="112" rx="12" ry="3.5" fill="none" stroke="#eaf3fa" stroke-width="2" opacity="0"/>
+      <circle id="splash-point" cx="150" cy="112" r="0.1" opacity="0"/>
+    </svg>
+    <p class="sr-only">a little seal with a tail diving into the water</p>
+  </div>
+
   <footer class="site-footer">
     <p>🐧 &amp; 🦭 &middot; sealed with love</p>
   </footer>
 
-  <script src="messages.js?v=6"></script>
-  <script src="page.js?v=6"></script>
+  <script src="messages.js?v=9"></script>
+  <script src="page.js?v=9"></script>
 </body>
 </html>
