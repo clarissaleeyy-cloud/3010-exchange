@@ -9,6 +9,10 @@ const CONFIG = {
   TARGET_DATE_ISO: "2027-01-09T07:55:00+08:00", // 9 Jan 2027, 7:55am SGT — when you meet again
   START_DATE_ISO: "2026-09-11T00:00:00+08:00",  // the day the countdown "starts" — used for the progress bar
 
+  // Which month the calendar opens on. Months are 0-indexed: 7 = August.
+  CALENDAR_START_YEAR: 2026,
+  CALENDAR_START_MONTH: 7, // August
+
   // Free, no-signup shared counter for the "send love" button.
   // Change LOVE_NAMESPACE to something unique to you two so your count
   // doesn't mix with anyone else's — e.g. "yourname-bfname-2026".
@@ -21,68 +25,285 @@ const CONFIG = {
   // the ntfy app (iOS/Android) and subscribe to this exact topic name.
   NTFY_TOPIC: "seeing-you-again-soon-love-CHANGE-ME",
 
-  // His location, for the timezone clock and weather widget — change all
-  // four of these to match his actual city.
-  HIS_CITY_NAME: "his city",
-  HIS_TIMEZONE: "America/Los_Angeles", // pick from: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-  HIS_LAT: 34.0522,
-  HIS_LON: -118.2437
+  // His location, for the timezone clock and weather widget.
+  HIS_CITY_NAME: "Irvine, California",
+  HIS_TIMEZONE: "America/Los_Angeles",
+  HIS_LAT: 33.6846,
+  HIS_LON: -117.8265,
+
+  YOUR_CITY_NAME: "Singapore",
+  YOUR_TIMEZONE: "Asia/Singapore"
 };
 
 // Mood icon artwork + display labels. Swap paths for your own image
 // files (e.g. icons/moods/penguin-angry.jpeg) if you'd like to use
-// real Pingu screenshots you already have saved — just make sure the
-// filenames below match exactly (including .jpeg vs .jpg).
+// your own screenshots — just make sure the filenames below match
+// exactly (including .jpeg vs .jpg). If a file is missing, the page
+// quietly falls back to the bundled .svg version.
 const MOOD_ICONS = {
-  surprise: { src: "icons/moods/penguin-angry.jpeg",    alt: "a mystery penguin",                      label: "surprise me" },
-  sad:      { src: "icons/moods/penguin-sad.jpeg",       alt: "a sad little penguin",                   label: "sad" },
-  homesick: { src: "icons/moods/penguin-homesick.jpeg", alt: "a wistful penguin looking toward home",  label: "homesick" },
-  happy:    { src: "icons/moods/penguin-happy.jpg",     alt: "a cheerful penguin with open flippers",  label: "happy hehe" },
-  general:  { src: "icons/moods/seal-general.jpeg",      alt: "a seal, just like Robby",                label: "i love you!" }
+  surprise: { src: "icons/moods/penguin-angry.jpeg",   alt: "a mystery penguin",                     label: "surprise me" },
+  sad:      { src: "icons/moods/penguin-sad.jpeg",     alt: "a sad little penguin",                  label: "sad" },
+  homesick: { src: "icons/moods/penguin-homesick.jpeg",alt: "a wistful penguin looking toward home", label: "homesick" },
+  happy:    { src: "icons/moods/penguin-happy.jpg",    alt: "a cheerful penguin with open flippers", label: "happy hehe" },
+  general:  { src: "icons/moods/seal-general.jpeg",    alt: "a friendly little seal",                label: "i love you!" }
 };
 
-// ───────────────────────── Timezone clock + weather ─────────────────────────
-function updateClocks(){
-  const now = new Date();
-  const sgTime = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Singapore', hour: '2-digit', minute: '2-digit' });
-  const hisTime = now.toLocaleTimeString('en-US', { timeZone: CONFIG.HIS_TIMEZONE, hour: '2-digit', minute: '2-digit' });
-  document.getElementById('tz-time-sg').textContent = sgTime;
-  document.getElementById('tz-time-his').textContent = hisTime;
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ═════════════════════════ timezone clocks ═════════════════════════
+
+// Reads the wall-clock time in a given IANA timezone.
+function timePartsIn(timeZone){
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone, hour12: false,
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  }).formatToParts(new Date()).reduce((acc, p) => (acc[p.type] = p.value, acc), {});
+
+  let h = parseInt(parts.hour, 10);
+  if (h === 24) h = 0; // some engines report midnight as 24
+  return { h, m: parseInt(parts.minute, 10), s: parseInt(parts.second, 10) };
 }
+
+// 12-hour display string, e.g. "9:42 pm"
+function formatDigital({ h, m }){
+  const suffix = h < 12 ? 'am' : 'pm';
+  let hour12 = h % 12;
+  if (hour12 === 0) hour12 = 12;
+  return `${hour12}:${String(m).padStart(2, '0')} ${suffix}`;
+}
+
+// How many hours a timezone sits ahead of UTC right now.
+function utcOffsetHours(timeZone, date){
+  const p = new Intl.DateTimeFormat('en-GB', {
+    timeZone, hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  }).formatToParts(date).reduce((acc, x) => (acc[x.type] = x.value, acc), {});
+
+  let hour = parseInt(p.hour, 10);
+  if (hour === 24) hour = 0;
+  const asIfUTC = Date.UTC(+p.year, +p.month - 1, +p.day, hour, +p.minute, +p.second);
+  return (asIfUTC - date.getTime()) / 3600000;
+}
+
+function setHand(id, degrees){
+  const el = document.getElementById(id);
+  if (el) el.setAttribute('transform', `rotate(${degrees} 50 50)`);
+}
+
+// Avoids the second hand spinning backwards through 359° → 0°.
+const handRotation = { 'sg-sec': 0, 'his-sec': 0 };
+function setSecondHand(id, seconds){
+  const target = seconds * 6;
+  let current = handRotation[id];
+  const base = Math.floor(current / 360) * 360;
+  let next = base + target;
+  if (next < current) next += 360;
+  handRotation[id] = next;
+  setHand(id, next);
+}
+
+function updateClocks(){
+  const sg  = timePartsIn(CONFIG.YOUR_TIMEZONE);
+  const his = timePartsIn(CONFIG.HIS_TIMEZONE);
+
+  document.getElementById('tz-time-sg').textContent  = formatDigital(sg);
+  document.getElementById('tz-time-his').textContent = formatDigital(his);
+
+  setHand('sg-hour',  (sg.h % 12) * 30 + sg.m * 0.5);
+  setHand('sg-min',   sg.m * 6 + sg.s * 0.1);
+  setSecondHand('sg-sec', sg.s);
+
+  setHand('his-hour', (his.h % 12) * 30 + his.m * 0.5);
+  setHand('his-min',  his.m * 6 + his.s * 0.1);
+  setSecondHand('his-sec', his.s);
+
+  // the gap between you two, in plain words
+  const now = new Date();
+  const diff = utcOffsetHours(CONFIG.YOUR_TIMEZONE, now) - utcOffsetHours(CONFIG.HIS_TIMEZONE, now);
+  const whole = Math.round(Math.abs(diff));
+  const direction = diff >= 0 ? 'behind' : 'ahead of';
+
+  const dayIn = tz => new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(now);
+  const sameDay = dayIn(CONFIG.YOUR_TIMEZONE) === dayIn(CONFIG.HIS_TIMEZONE);
+  const dayNote = sameDay
+    ? "you're on the same date today"
+    : (diff >= 0 ? "he's still on yesterday" : "he's already on tomorrow");
+
+  document.getElementById('tz-gap').textContent =
+    `Irvine is ${whole} hours ${direction} you — ${dayNote}.`;
+}
+
 document.getElementById('his-city-label').textContent = CONFIG.HIS_CITY_NAME;
 updateClocks();
-setInterval(updateClocks, 30 * 1000);
+setInterval(updateClocks, 1000);
 
-function weatherCodeToText(code){
+// ═════════════════════════ weather ═════════════════════════
+
+// Small hand-drawn-feeling weather icons, matched to the page palette.
+const WEATHER_ART = {
+  sun: `
+    <svg viewBox="0 0 100 100">
+      <g stroke="#e0a63a" stroke-width="5" stroke-linecap="round">
+        <line x1="50" y1="8"  x2="50" y2="20"/>
+        <line x1="50" y1="80" x2="50" y2="92"/>
+        <line x1="8"  y1="50" x2="20" y2="50"/>
+        <line x1="80" y1="50" x2="92" y2="50"/>
+        <line x1="20" y1="20" x2="29" y2="29"/>
+        <line x1="71" y1="71" x2="80" y2="80"/>
+        <line x1="20" y1="80" x2="29" y2="71"/>
+        <line x1="71" y1="29" x2="80" y2="20"/>
+      </g>
+      <circle cx="50" cy="50" r="21" fill="#f3c65c" stroke="#e0a63a" stroke-width="3"/>
+    </svg>`,
+  partly: `
+    <svg viewBox="0 0 100 100">
+      <g stroke="#e0a63a" stroke-width="4.5" stroke-linecap="round">
+        <line x1="38" y1="6"  x2="38" y2="16"/>
+        <line x1="8"  y1="36" x2="18" y2="36"/>
+        <line x1="16" y1="14" x2="23" y2="21"/>
+        <line x1="60" y1="14" x2="53" y2="21"/>
+      </g>
+      <circle cx="38" cy="36" r="16" fill="#f3c65c" stroke="#e0a63a" stroke-width="3"/>
+      <g fill="#ffffff" stroke="#b9c9d8" stroke-width="3" stroke-linejoin="round">
+        <path d="M34 78 A14 14 0 0 1 36 50 A17 17 0 0 1 68 52 A13 13 0 0 1 70 78 Z"/>
+      </g>
+    </svg>`,
+  cloudy: `
+    <svg viewBox="0 0 100 100">
+      <g fill="#e6eef5" stroke="#b0c2d2" stroke-width="3" stroke-linejoin="round">
+        <path d="M22 58 A12 12 0 0 1 24 34 A15 15 0 0 1 52 36 A11 11 0 0 1 54 58 Z"/>
+      </g>
+      <g fill="#ffffff" stroke="#b0c2d2" stroke-width="3.2" stroke-linejoin="round">
+        <path d="M32 82 A15 15 0 0 1 34 52 A18 18 0 0 1 68 54 A14 14 0 0 1 70 82 Z"/>
+      </g>
+    </svg>`,
+  fog: `
+    <svg viewBox="0 0 100 100">
+      <g fill="#ffffff" stroke="#b0c2d2" stroke-width="3.2" stroke-linejoin="round">
+        <path d="M26 58 A15 15 0 0 1 28 28 A18 18 0 0 1 62 30 A14 14 0 0 1 64 58 Z"/>
+      </g>
+      <g stroke="#adc3d4" stroke-width="5" stroke-linecap="round">
+        <line x1="20" y1="70" x2="76" y2="70"/>
+        <line x1="28" y1="82" x2="68" y2="82"/>
+        <line x1="24" y1="94" x2="60" y2="94"/>
+      </g>
+    </svg>`,
+  drizzle: `
+    <svg viewBox="0 0 100 100">
+      <g fill="#ffffff" stroke="#adc3d4" stroke-width="3.2" stroke-linejoin="round">
+        <path d="M24 56 A15 15 0 0 1 26 26 A18 18 0 0 1 60 28 A14 14 0 0 1 62 56 Z"/>
+      </g>
+      <g stroke="#7fb0d4" stroke-width="4" stroke-linecap="round">
+        <line x1="32" y1="66" x2="28" y2="76"/>
+        <line x1="48" y1="68" x2="44" y2="78"/>
+        <line x1="64" y1="66" x2="60" y2="76"/>
+      </g>
+    </svg>`,
+  rain: `
+    <svg viewBox="0 0 100 100">
+      <g fill="#e6eef5" stroke="#9db4c7" stroke-width="3" stroke-linejoin="round">
+        <path d="M20 48 A11 11 0 0 1 22 26 A14 14 0 0 1 48 28 A10 10 0 0 1 50 48 Z"/>
+      </g>
+      <g fill="#ffffff" stroke="#9db4c7" stroke-width="3.2" stroke-linejoin="round">
+        <path d="M28 62 A15 15 0 0 1 30 32 A18 18 0 0 1 64 34 A14 14 0 0 1 66 62 Z"/>
+      </g>
+      <g fill="#6ba6d0">
+        <path d="M34 70 C34 70 29 78 29 82 A5 5 0 0 0 39 82 C39 78 34 70 34 70 Z"/>
+        <path d="M50 74 C50 74 45 82 45 86 A5 5 0 0 0 55 86 C55 82 50 74 50 74 Z"/>
+        <path d="M66 70 C66 70 61 78 61 82 A5 5 0 0 0 71 82 C71 78 66 70 66 70 Z"/>
+      </g>
+    </svg>`,
+  storm: `
+    <svg viewBox="0 0 100 100">
+      <g fill="#dbe6ef" stroke="#8fa6ba" stroke-width="3.2" stroke-linejoin="round">
+        <path d="M26 58 A15 15 0 0 1 28 28 A18 18 0 0 1 62 30 A14 14 0 0 1 64 58 Z"/>
+      </g>
+      <polygon points="48,60 32,84 44,84 36,98 62,72 48,72 58,60" fill="#e8b53c" stroke="#c9931f" stroke-width="2.5" stroke-linejoin="round"/>
+    </svg>`,
+  snow: `
+    <svg viewBox="0 0 100 100">
+      <g fill="#ffffff" stroke="#adc3d4" stroke-width="3.2" stroke-linejoin="round">
+        <path d="M26 56 A15 15 0 0 1 28 26 A18 18 0 0 1 62 28 A14 14 0 0 1 64 56 Z"/>
+      </g>
+      <g stroke="#8ec2e0" stroke-width="3" stroke-linecap="round">
+        <g transform="translate(32,74)">
+          <line x1="-7" y1="0" x2="7" y2="0"/><line x1="0" y1="-7" x2="0" y2="7"/>
+          <line x1="-5" y1="-5" x2="5" y2="5"/><line x1="-5" y1="5" x2="5" y2="-5"/>
+        </g>
+        <g transform="translate(58,80)">
+          <line x1="-7" y1="0" x2="7" y2="0"/><line x1="0" y1="-7" x2="0" y2="7"/>
+          <line x1="-5" y1="-5" x2="5" y2="5"/><line x1="-5" y1="5" x2="5" y2="-5"/>
+        </g>
+      </g>
+    </svg>`
+};
+
+// Open-Meteo WMO weather codes → an icon and a plain description.
+function describeWeather(code){
   const map = {
-    0: '\u2600\ufe0f clear', 1: '\ud83c\udf24\ufe0f mostly clear', 2: '\u26c5 partly cloudy', 3: '\u2601\ufe0f cloudy',
-    45: '\ud83c\udf2b\ufe0f foggy', 48: '\ud83c\udf2b\ufe0f foggy',
-    51: '\ud83c\udf26\ufe0f light drizzle', 53: '\ud83c\udf26\ufe0f drizzle', 55: '\ud83c\udf27\ufe0f heavy drizzle',
-    61: '\ud83c\udf27\ufe0f light rain', 63: '\ud83c\udf27\ufe0f rain', 65: '\ud83c\udf27\ufe0f heavy rain',
-    71: '\ud83c\udf28\ufe0f light snow', 73: '\ud83c\udf28\ufe0f snow', 75: '\u2744\ufe0f heavy snow',
-    80: '\ud83c\udf26\ufe0f showers', 81: '\ud83c\udf27\ufe0f showers', 82: '\u26c8\ufe0f violent showers',
-    95: '\u26c8\ufe0f thunderstorm'
+    0:  ['sun',     'clear and sunny'],
+    1:  ['sun',     'mostly clear'],
+    2:  ['partly',  'partly cloudy'],
+    3:  ['cloudy',  'overcast and cloudy'],
+    45: ['fog',     'foggy'],
+    48: ['fog',     'freezing fog'],
+    51: ['drizzle', 'light drizzle'],
+    53: ['drizzle', 'drizzling'],
+    55: ['drizzle', 'heavy drizzle'],
+    56: ['drizzle', 'freezing drizzle'],
+    57: ['drizzle', 'freezing drizzle'],
+    61: ['rain',    'light rain'],
+    63: ['rain',    'raining'],
+    65: ['rain',    'heavy rain'],
+    66: ['rain',    'freezing rain'],
+    67: ['rain',    'freezing rain'],
+    71: ['snow',    'light snow'],
+    73: ['snow',    'snowing'],
+    75: ['snow',    'heavy snow'],
+    77: ['snow',    'snow grains'],
+    80: ['rain',    'light showers'],
+    81: ['rain',    'rain showers'],
+    82: ['rain',    'heavy showers'],
+    85: ['snow',    'snow showers'],
+    86: ['snow',    'heavy snow showers'],
+    95: ['storm',   'thunderstorm'],
+    96: ['storm',   'thunderstorm with hail'],
+    99: ['storm',   'heavy thunderstorm']
   };
-  return map[code] || '\ud83c\udf21\ufe0f';
+  return map[code] || ['partly', 'hard to say right now'];
 }
 
 async function loadHisWeather(){
+  const iconEl = document.getElementById('weather-icon');
+  const tempEl = document.getElementById('weather-temp');
+  const descEl = document.getElementById('weather-desc');
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.HIS_LAT}&longitude=${CONFIG.HIS_LON}&current_weather=true&temperature_unit=fahrenheit`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.HIS_LAT}`
+              + `&longitude=${CONFIG.HIS_LON}&current_weather=true`
+              + `&temperature_unit=celsius&timezone=${encodeURIComponent(CONFIG.HIS_TIMEZONE)}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('weather fetch failed');
     const data = await res.json();
     const cw = data.current_weather;
-    document.getElementById('his-weather').textContent = `${Math.round(cw.temperature)}\u00b0F ${weatherCodeToText(cw.weathercode)}`;
+    const [iconKey, description] = describeWeather(cw.weathercode);
+
+    iconEl.innerHTML = WEATHER_ART[iconKey] || WEATHER_ART.partly;
+    tempEl.textContent = `${Math.round(cw.temperature)}\u00b0C`;
+    descEl.textContent = description;
   } catch (err){
     console.error('Could not load weather:', err);
-    document.getElementById('his-weather').textContent = 'weather unavailable';
+    iconEl.innerHTML = WEATHER_ART.cloudy;
+    tempEl.textContent = '--\u00b0C';
+    descEl.textContent = "can't reach the forecast right now";
   }
 }
 loadHisWeather();
 setInterval(loadHisWeather, 15 * 60 * 1000);
 
-// ───────────────────────── Countdown + progress bar ─────────────────────────
+// ═════════════════════════ countdown + progress bar ═════════════════════════
 function updateCountdown(){
   const target = new Date(CONFIG.TARGET_DATE_ISO).getTime();
   const start = new Date(CONFIG.START_DATE_ISO).getTime();
@@ -101,7 +322,6 @@ function updateCountdown(){
   document.getElementById('cd-mins').textContent = pad(mins);
   document.getElementById('cd-secs').textContent = pad(secs);
 
-  // progress bar: % of the total wait that has already passed
   const totalSpan = target - start;
   let pct = totalSpan > 0 ? ((now - start) / totalSpan) * 100 : 100;
   pct = Math.min(100, Math.max(0, pct));
@@ -111,7 +331,7 @@ function updateCountdown(){
 updateCountdown();
 setInterval(updateCountdown, 1000);
 
-// ───────────────────────── Daily note from Google Sheet ─────────────────────────
+// ═════════════════════════ daily note from Google Sheet ═════════════════════════
 function parseCSV(text){
   const rows = [];
   let row = [], field = '', inQuotes = false;
@@ -134,18 +354,14 @@ function parseCSV(text){
   return rows.filter(r => r.some(cell => cell.trim() !== ''));
 }
 
-// notes with parsed JS Date objects, kept for the calendar view
 let ALL_NOTES = [];
 
 function parseNoteDate(str){
   if (!str) return null;
   str = str.trim();
-  // try a direct parse first (handles "2027-01-05", "Jan 5 2027", etc.)
   let d = new Date(str);
   if (!isNaN(d.getTime())) return d;
 
-  // fall back to "14 Aug" / "Aug 14" style with no year — infer the year
-  // from the START_DATE_ISO / TARGET_DATE_ISO window in CONFIG
   const months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
   const m = str.toLowerCase().match(/(\d{1,2})[a-z]*\s+([a-z]{3,})|([a-z]{3,})\s+(\d{1,2})/);
   if (!m) return null;
@@ -157,9 +373,6 @@ function parseNoteDate(str){
   const start = new Date(CONFIG.START_DATE_ISO);
   const target = new Date(CONFIG.TARGET_DATE_ISO);
   let year = start.getFullYear();
-  // only bump to the target's year if this month matches the target's month
-  // (e.g. a January note during a Sept–Jan exchange) — anything else stays
-  // in the start year, even if its month number is numerically smaller
   if (monIdx === target.getMonth() && target.getFullYear() !== start.getFullYear()){
     year = target.getFullYear();
   }
@@ -177,11 +390,13 @@ function renderNotes(rows){
   if (!dataRows.length){
     document.getElementById('note-body').textContent = "No notes yet — add one to your sheet!";
     document.getElementById('note-date').textContent = "";
-    return;
+  } else {
+    const latest = dataRows[dataRows.length - 1];
+    document.getElementById('note-body').textContent = latest[1];
+    document.getElementById('note-date').textContent = latest[0] || "";
   }
-  const latest = dataRows[dataRows.length - 1];
-  document.getElementById('note-body').textContent = latest[1];
-  document.getElementById('note-date').textContent = latest[0] || "";
+
+  renderCalendar(); // the calendar lives on the home page now, so keep it in sync
 }
 
 function sheetCsvUrl(){
@@ -200,8 +415,6 @@ async function loadNotes(){
     if (!res.ok) throw new Error('Sheet fetch returned status ' + res.status);
     const text = await res.text();
     if (text.trim().startsWith('<')) {
-      // Google returns an HTML error/login page instead of CSV when the
-      // sheet isn't shared publicly, or the ID/gid is wrong.
       throw new Error('Got an HTML page instead of CSV — check sharing settings and SHEET_ID/GID.');
     }
     const rows = parseCSV(text);
@@ -219,24 +432,9 @@ async function loadNotes(){
     }
   }
 }
-loadNotes();
-setInterval(loadNotes, 60 * 1000); // recheck the sheet every minute without needing a refresh
 
-document.getElementById('view-calendar-btn').addEventListener('click', () => {
-  calendarMonth = latestNotesMonth();
-  transitionToView('view-calendar');
-  renderCalendar();
-});
-
-// ───────────────────────── Calendar view ─────────────────────────
-let calendarMonth = new Date(); // first-of-month Date currently displayed
-
-function latestNotesMonth(){
-  const dated = ALL_NOTES.filter(n => n.date);
-  if (!dated.length) return new Date();
-  const latest = dated[dated.length - 1].date;
-  return new Date(latest.getFullYear(), latest.getMonth(), 1);
-}
+// ═════════════════════════ calendar (now on the home page) ═════════════════════════
+let calendarMonth = new Date(CONFIG.CALENDAR_START_YEAR, CONFIG.CALENDAR_START_MONTH, 1);
 
 function dateKey(d){
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
@@ -246,7 +444,6 @@ function renderCalendar(){
   const label = calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   document.getElementById('cal-month-label').textContent = label;
 
-  // group notes for this month by day
   const notesByDay = {};
   ALL_NOTES.forEach(n => {
     if (!n.date) return;
@@ -284,6 +481,9 @@ function renderCalendar(){
     const notes = notesByDay[key];
     if (notes && notes.length){
       cell.classList.add('has-note');
+      cell.setAttribute('role', 'button');
+      cell.setAttribute('tabindex', '0');
+
       const showTooltip = () => {
         const tip = document.getElementById('calendar-tooltip');
         const dateLabel = new Date(year, month, day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -295,45 +495,61 @@ function renderCalendar(){
         tip.innerHTML = html;
         const msgEls = tip.querySelectorAll('.ct-message');
         notes.forEach((n, idx) => { msgEls[idx].textContent = n.message; });
-        const rect = cell.getBoundingClientRect();
-        tip.style.left = Math.min(rect.left, window.innerWidth - 260) + 'px';
-        tip.style.top = (rect.bottom + 8) + 'px';
+
         tip.hidden = false;
+        const rect = cell.getBoundingClientRect();
+        const tipRect = tip.getBoundingClientRect();
+        let left = rect.left;
+        if (left + tipRect.width > window.innerWidth - 12) left = window.innerWidth - tipRect.width - 12;
+        let top = rect.bottom + 8;
+        if (top + tipRect.height > window.innerHeight - 12) top = rect.top - tipRect.height - 8;
+        tip.style.left = Math.max(12, left) + 'px';
+        tip.style.top = Math.max(12, top) + 'px';
       };
       const hideTooltip = () => { document.getElementById('calendar-tooltip').hidden = true; };
 
       cell.addEventListener('mouseenter', showTooltip);
-      cell.addEventListener('mouseleave', hideTooltip);
-      cell.addEventListener('click', (e) => {
+      cell.addEventListener('mouseleave', () => {
+        if (!cell.classList.contains('is-active')) hideTooltip();
+      });
+      const toggle = (e) => {
         e.stopPropagation();
         const alreadyActive = cell.classList.contains('is-active');
         document.querySelectorAll('.cal-day.is-active').forEach(el => el.classList.remove('is-active'));
         if (alreadyActive){ hideTooltip(); }
         else { cell.classList.add('is-active'); showTooltip(); }
+      };
+      cell.addEventListener('click', toggle);
+      cell.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggle(e); }
       });
     }
 
     grid.appendChild(cell);
   }
 }
+renderCalendar();
+loadNotes();
+setInterval(loadNotes, 60 * 1000); // recheck the sheet every minute without needing a refresh
 
 document.addEventListener('click', () => {
   document.getElementById('calendar-tooltip').hidden = true;
   document.querySelectorAll('.cal-day.is-active').forEach(el => el.classList.remove('is-active'));
 });
 
-document.getElementById('cal-prev').addEventListener('click', () => {
+document.getElementById('cal-prev').addEventListener('click', (e) => {
+  e.stopPropagation();
   calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1);
   renderCalendar();
 });
-document.getElementById('cal-next').addEventListener('click', () => {
+document.getElementById('cal-next').addEventListener('click', (e) => {
+  e.stopPropagation();
   calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1);
   renderCalendar();
 });
 
-// ───────────────────────── Send love counter ─────────────────────────
+// ═════════════════════════ send love counter ═════════════════════════
 function loveApiUrl(action){
-  // action: "up" to increment, "" to just read the current count
   const suffix = action ? `/${action}` : '';
   return `https://api.counterapi.dev/v1/${CONFIG.LOVE_NAMESPACE}/${CONFIG.LOVE_COUNTER}${suffix}`;
 }
@@ -361,9 +577,6 @@ async function loadLoveCount(){
 loadLoveCount();
 
 function sendLoveNotification(){
-  // fire-and-forget push notification via ntfy.sh — both of you need the
-  // ntfy app installed and subscribed to CONFIG.NTFY_TOPIC for this to
-  // actually reach your phones
   fetch(`https://ntfy.sh/${CONFIG.NTFY_TOPIC}`, {
     method: 'POST',
     body: 'sent you some love \ud83d\udc9b',
@@ -387,53 +600,189 @@ document.getElementById('send-love-btn').addEventListener('click', async () => {
     throw new Error('unexpected response');
   } catch (err){
     console.error('Could not send love (counter service unreachable):', err);
-    // fall back to a local-only tally so the button still feels responsive
     const local = parseInt(localStorage.getItem('lastLoveCount') || '0', 10) + 1;
     setLoveDisplay(local);
     localStorage.setItem('lastLoveCount', String(local));
   }
 });
 
-// ───────────────────────── View switching (with golf-ball transition) ─────────────────────────
+// ═════════════════════════ golf-ball transition ═════════════════════════
+// The ball is simulated frame by frame with real projectile motion — a
+// launch arc, gravity, two damped bounces off the fairway, backspin, and
+// a shadow that tightens as it drops — rather than a fixed keyframe path.
+
+const GOLF = {
+  startX: 30,
+  groundY: 122,     // y of the ball's centre when it's sitting on the turf
+  holeX: 330,
+  holeRadius: 13,
+  gravity: 1500,    // svg units per second squared
+  launchVX: 430,
+  launchVY: -460,
+  bounceVertical: 0.35,   // how much upward speed survives a bounce
+  bounceHorizontal: 0.45, // how much forward speed survives a bounce
+  rollFriction: 1.6,      // units/s lost per second while rolling
+  impactDelay: 370,       // ms — lines up with the club reaching the ball
+  sinkDuration: 300       // ms — the ball dropping into the cup
+};
+
+function spawnTurfSpray(){
+  const layer = document.getElementById('turf-spray');
+  if (!layer) return;
+  layer.innerHTML = '';
+  layer.setAttribute('opacity', '1');
+  const ns = 'http://www.w3.org/2000/svg';
+  for (let i = 0; i < 7; i++){
+    const clod = document.createElementNS(ns, 'ellipse');
+    clod.setAttribute('cx', String(38 + Math.random() * 10));
+    clod.setAttribute('cy', String(128 + Math.random() * 3));
+    clod.setAttribute('rx', String(1.6 + Math.random() * 2));
+    clod.setAttribute('ry', String(1.2 + Math.random() * 1.4));
+    clod.setAttribute('fill', i % 2 ? '#7d9160' : '#6b5a3a');
+    clod.setAttribute('class', 'turf-clod');
+    clod.style.setProperty('--tx', (14 + Math.random() * 34).toFixed(1) + 'px');
+    clod.style.setProperty('--ty', (-(8 + Math.random() * 26)).toFixed(1) + 'px');
+    layer.appendChild(clod);
+  }
+  setTimeout(() => { layer.innerHTML = ''; layer.setAttribute('opacity', '0'); }, 600);
+}
+
+function playGolfShot(onDone){
+  const overlay = document.getElementById('transition-overlay');
+  const ballG   = document.getElementById('golf-ball-g');
+  const shadow  = document.getElementById('ball-shadow');
+  const club    = document.getElementById('golf-club');
+
+  overlay.hidden = false;
+  overlay.classList.remove('is-playing');
+
+  // reset the club animation so it replays from the top every time
+  club.style.animation = 'none';
+  ballG.setAttribute('transform', 'translate(0,0)');
+  shadow.setAttribute('cx', String(GOLF.startX));
+  shadow.setAttribute('rx', '8');
+  shadow.setAttribute('opacity', '0.22');
+  void ballG.getBoundingClientRect();
+  club.style.animation = '';
+  overlay.classList.add('is-playing');
+
+  let x = GOLF.startX;
+  let y = GOLF.groundY;
+  let vx = 0, vy = 0;
+  let spin = 0;
+  let launched = false;
+  let holed = false;
+  let sinkStart = 0;
+
+  const t0 = performance.now();
+  let last = t0;
+
+  function frame(now){
+    const elapsed = now - t0;
+    let dt = (now - last) / 1000;
+    last = now;
+    if (dt > 0.05) dt = 0.05; // don't let a dropped frame teleport the ball
+
+    if (!launched && elapsed >= GOLF.impactDelay){
+      launched = true;
+      vx = GOLF.launchVX;
+      vy = GOLF.launchVY;
+      spawnTurfSpray();
+    }
+
+    if (launched && !holed){
+      vy += GOLF.gravity * dt;
+      x += vx * dt;
+      y += vy * dt;
+      spin += vx * dt * 1.7; // backspin, proportional to how fast it's travelling
+
+      if (y >= GOLF.groundY){
+        y = GOLF.groundY;
+        // has it arrived at the cup?
+        if (Math.abs(x - GOLF.holeX) <= GOLF.holeRadius){
+          holed = true;
+          sinkStart = now;
+          vx = 0; vy = 0;
+        } else if (Math.abs(vy) > 40){
+          vy = -Math.abs(vy) * GOLF.bounceVertical;   // bounce
+          vx *= GOLF.bounceHorizontal;
+        } else {
+          vy = 0;                                     // settled — now it rolls
+          vx = Math.max(0, vx - GOLF.rollFriction * 60 * dt);
+        }
+      }
+    }
+
+    const height = Math.max(0, GOLF.groundY - y);
+    const dx = x - GOLF.startX;
+
+    if (holed){
+      const p = Math.min(1, (now - sinkStart) / GOLF.sinkDuration);
+      const eased = p * p;
+      ballG.setAttribute('transform',
+        `translate(${dx.toFixed(2)}, ${(eased * 9).toFixed(2)}) rotate(${spin.toFixed(1)}) scale(${(1 - eased).toFixed(3)})`);
+      ballG.setAttribute('opacity', String(1 - eased));
+      shadow.setAttribute('opacity', String(0.22 * (1 - eased)));
+      if (p >= 1){
+        finish();
+        return;
+      }
+    } else {
+      ballG.setAttribute('transform',
+        `translate(${dx.toFixed(2)}, ${(y - GOLF.groundY).toFixed(2)}) rotate(${spin.toFixed(1)})`);
+      shadow.setAttribute('cx', x.toFixed(2));
+      shadow.setAttribute('rx', (8 * Math.max(0.35, 1 - height / 150)).toFixed(2));
+      shadow.setAttribute('opacity', (0.22 * Math.max(0.3, 1 - height / 130)).toFixed(3));
+    }
+
+    // safety valve, in case the physics ever fails to hole out
+    if (elapsed > 2600){ finish(); return; }
+    requestAnimationFrame(frame);
+  }
+
+  function finish(){
+    ballG.setAttribute('opacity', '1');
+    overlay.classList.remove('is-playing');
+    overlay.hidden = true;
+    onDone();
+  }
+
+  requestAnimationFrame(frame);
+}
+
+// ═════════════════════════ view switching ═════════════════════════
 function showView(id){
   document.querySelectorAll('.view').forEach(v => v.classList.remove('is-active'));
   document.getElementById(id).classList.add('is-active');
+  window.scrollTo({ top: 0, behavior: 'auto' });
 }
-
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function transitionToView(id){
   if (prefersReducedMotion){
     showView(id);
     return;
   }
-  const overlay = document.getElementById('transition-overlay');
-  const ball = document.getElementById('golf-ball');
-  const club = document.getElementById('golf-club');
-
-  overlay.hidden = false;
-  // restart both animations from scratch each time
-  overlay.classList.remove('is-playing');
-  ball.style.animation = 'none';
-  club.style.animation = 'none';
-  void ball.offsetWidth; // force reflow
-  ball.style.animation = '';
-  club.style.animation = '';
-  overlay.classList.add('is-playing');
-
-  setTimeout(() => {
-    showView(id);
-    overlay.classList.remove('is-playing');
-    overlay.hidden = true;
-  }, 1100);
+  playGolfShot(() => showView(id));
 }
 
-document.getElementById('open-letterbox').addEventListener('click', () => transitionToView('view-mood'));
+// the mailbox and its speech bubble both open the letters
+['mailbox-hit', 'bubble-hit'].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('click', () => transitionToView('view-mood'));
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' '){
+      e.preventDefault();
+      transitionToView('view-mood');
+    }
+  });
+});
+
 document.querySelectorAll('[data-back]').forEach(btn => {
   btn.addEventListener('click', () => transitionToView(btn.dataset.back));
 });
 
-// ───────────────────────── Mood grid ─────────────────────────
+// ═════════════════════════ mood grid ═════════════════════════
 const MOODS = ['surprise', 'sad', 'homesick', 'happy', 'general'];
 const moodGrid = document.getElementById('mood-grid');
 MOODS.forEach(mood => {
@@ -445,6 +794,11 @@ MOODS.forEach(mood => {
   const img = document.createElement('img');
   img.src = icon.src;
   img.alt = icon.alt;
+  // if your own .jpeg/.jpg isn't there, fall back to the bundled .svg
+  img.addEventListener('error', () => {
+    const svgFallback = icon.src.replace(/\.(jpe?g|png)$/i, '.svg');
+    if (img.src.indexOf(svgFallback) === -1) img.src = svgFallback;
+  }, { once: true });
 
   const label = document.createElement('span');
   label.textContent = icon.label;
@@ -458,7 +812,6 @@ MOODS.forEach(mood => {
   moodGrid.appendChild(btn);
 });
 
-// picks one random letter from every mood combined and reveals it right away
 function openSurprise(){
   const allLetters = (typeof MOOD_MESSAGES !== 'undefined')
     ? Object.values(MOOD_MESSAGES).flat()
@@ -471,9 +824,7 @@ function openSurprise(){
   const bubble = document.getElementById('mood-speech-bubble');
   if (bubble) bubble.hidden = true;
 
-  const grid = document.getElementById('envelope-grid');
-  grid.innerHTML = '';
-
+  document.getElementById('envelope-grid').innerHTML = '';
   document.getElementById('letter-text').innerHTML = formatLetterText(pick.text);
   renderLetterMedia(pick);
   document.getElementById('letter-reveal').hidden = false;
@@ -484,7 +835,7 @@ function openSurprise(){
   transitionToView('view-envelopes');
 }
 
-// ───────────────────────── Letter content helpers ─────────────────────────
+// ═════════════════════════ letter content helpers ═════════════════════════
 function escapeHTML(str){
   return str
     .replace(/&/g, '&amp;')
@@ -492,8 +843,6 @@ function escapeHTML(str){
     .replace(/>/g, '&gt;');
 }
 
-// turns plain message text into safe HTML: escapes it, auto-links any URLs,
-// and turns blank-line breaks into paragraphs (single line breaks into <br>)
 function formatLetterText(text){
   const escaped = escapeHTML(text);
   const urlRegex = /(https?:\/\/[^\s<]+)/g;
@@ -568,17 +917,16 @@ function openMood(mood){
 }
 
 document.getElementById('close-letter').addEventListener('click', () => {
-  playSealSplash(() => {
+  playSealSwim(() => {
     document.getElementById('letter-reveal').hidden = true;
   });
 });
 
-// ───────────────────────── Special letter effects ─────────────────────────
+// ═════════════════════════ special letter effects ═════════════════════════
 function spawnHearts(){
   const container = document.createElement('div');
   container.className = 'hearts-burst';
-  const count = 20;
-  for (let i = 0; i < count; i++){
+  for (let i = 0; i < 20; i++){
     const heart = document.createElement('span');
     heart.className = 'heart-particle';
     heart.textContent = '❤️';
@@ -625,57 +973,201 @@ function spawnFireworks(){
   setTimeout(() => container.remove(), bursts * 300 + 1300);
 }
 
-// ───────────────────────── Seal-splash close animation ─────────────────────────
+// ═════════════════════════ seal swim + splash ═════════════════════════
+// The seal cruises through the water with a real swimming undulation,
+// turns, comes back, then breaches and belly-flops back in — the arc
+// out of the water is ballistic, so it slows at the top and accelerates
+// on the way down the way a real jump does.
+
+const SEA = {
+  surfaceY: 78,
+  scale: 0.78,
+  swimEnd: 0.50,     // phase A ends (seconds)
+  turnEnd: 0.88,     // phase B ends
+  breachStart: 0.88,
+  breachVX: 130,
+  breachVY: -520,
+  breachG: 1800,
+  breachDuration: 0.578,
+  sinkDuration: 0.30
+};
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function spawnRipple(cx, delay, maxScale){
+  const layer = document.getElementById('ripple-layer');
+  if (!layer) return;
+  const ring = document.createElementNS(SVG_NS, 'ellipse');
+  ring.setAttribute('cx', String(cx));
+  ring.setAttribute('cy', String(SEA.surfaceY));
+  ring.setAttribute('rx', '10');
+  ring.setAttribute('ry', '3');
+  ring.setAttribute('fill', 'none');
+  ring.setAttribute('stroke', '#f2f9ff');
+  ring.setAttribute('stroke-width', '2');
+  ring.setAttribute('opacity', '0');
+  layer.appendChild(ring);
+
+  const start = performance.now() + delay;
+  const life = 850;
+  function step(now){
+    const p = (now - start) / life;
+    if (p < 0){ requestAnimationFrame(step); return; }
+    if (p >= 1){ ring.remove(); return; }
+    const scale = 1 + p * (maxScale - 1);
+    ring.setAttribute('rx', String(10 * scale));
+    ring.setAttribute('ry', String(3 * scale * 0.85));
+    ring.setAttribute('opacity', String(0.85 * (1 - p)));
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function spawnBubble(x, y){
+  const layer = document.getElementById('bubble-layer');
+  if (!layer) return;
+  const b = document.createElementNS(SVG_NS, 'circle');
+  const r = 1.2 + Math.random() * 2.2;
+  b.setAttribute('cx', String(x));
+  b.setAttribute('cy', String(y));
+  b.setAttribute('r', String(r));
+  b.setAttribute('fill', '#ffffff');
+  b.setAttribute('opacity', '0.6');
+  layer.appendChild(b);
+
+  const start = performance.now();
+  const life = 700 + Math.random() * 400;
+  const drift = (Math.random() - 0.5) * 14;
+  function step(now){
+    const p = (now - start) / life;
+    if (p >= 1){ b.remove(); return; }
+    b.setAttribute('cx', String(x + drift * p));
+    b.setAttribute('cy', String(y - (y - SEA.surfaceY + 6) * p));
+    b.setAttribute('opacity', String(0.6 * (1 - p)));
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 function spawnSplashDroplets(){
   const marker = document.getElementById('splash-point');
   if (!marker) return;
   const rect = marker.getBoundingClientRect();
   const x = rect.left + rect.width / 2;
   const y = rect.top + rect.height / 2;
-  const count = 12;
-  for (let i = 0; i < count; i++){
+  for (let i = 0; i < 18; i++){
     const d = document.createElement('span');
     d.className = 'splash-droplet';
-    // spread mostly upward and outward, like water kicked up on impact
-    const theta = -Math.PI * (0.12 + Math.random() * 0.76);
-    const dist = 16 + Math.random() * 36;
-    const dx = Math.cos(theta) * dist;
-    const dy = Math.sin(theta) * dist;
-    const size = 4 + Math.random() * 5;
+    // thrown mostly upward and outward, the way water is displaced on impact
+    const theta = -Math.PI * (0.08 + Math.random() * 0.84);
+    const dist = 20 + Math.random() * 52;
+    const size = 3 + Math.random() * 6;
     d.style.left = x + 'px';
     d.style.top = y + 'px';
     d.style.width = size + 'px';
     d.style.height = size + 'px';
-    d.style.setProperty('--dx', dx.toFixed(1) + 'px');
-    d.style.setProperty('--dy', dy.toFixed(1) + 'px');
+    d.style.setProperty('--dx', (Math.cos(theta) * dist).toFixed(1) + 'px');
+    d.style.setProperty('--dy', (Math.sin(theta) * dist).toFixed(1) + 'px');
+    d.style.animationDelay = (Math.random() * 0.06) + 's';
     document.body.appendChild(d);
-    setTimeout(() => d.remove(), 750);
+    setTimeout(() => d.remove(), 900);
   }
 }
 
-function playSealSplash(callback){
+function playSealSwim(callback){
   if (prefersReducedMotion){
     callback();
     return;
   }
+
   const overlay = document.getElementById('seal-splash-overlay');
-  const seal = document.getElementById('seal-diver');
-  const ripples = ['ripple-1', 'ripple-2', 'ripple-3'].map(id => document.getElementById(id));
-
+  const seal = document.getElementById('seal-swimmer');
+  const marker = document.getElementById('splash-point');
   overlay.hidden = false;
-  overlay.classList.remove('is-playing');
-  seal.style.animation = 'none';
-  ripples.forEach(r => { if (r) r.style.animation = 'none'; });
-  void seal.offsetWidth; // force reflow
-  seal.style.animation = '';
-  ripples.forEach(r => { if (r) r.style.animation = ''; });
-  overlay.classList.add('is-playing');
+  document.getElementById('ripple-layer').innerHTML = '';
+  document.getElementById('bubble-layer').innerHTML = '';
 
-  setTimeout(spawnSplashDroplets, 420);
+  const S = SEA.scale;
+  const total = SEA.breachStart + SEA.breachDuration + SEA.sinkDuration;
 
-  setTimeout(() => {
-    callback();
-    overlay.classList.remove('is-playing');
-    overlay.hidden = true;
-  }, 900);
+  let splashed = false;
+  let lastBubble = 0;
+  const t0 = performance.now();
+
+  function frame(now){
+    const t = (now - t0) / 1000;
+    let x, y, rot, dir = 1, opacity = 1;
+
+    if (t < SEA.swimEnd){
+      // ── cruising right, tail-driven undulation
+      const p = t / SEA.swimEnd;
+      x = 58 + p * 186;
+      y = 130 + 11 * Math.sin(p * Math.PI * 3);
+      rot = 13 * Math.cos(p * Math.PI * 3);
+      dir = 1;
+      opacity = 0.92;
+
+    } else if (t < SEA.turnEnd){
+      // ── banking round and coming back the other way
+      const p = (t - SEA.swimEnd) / (SEA.turnEnd - SEA.swimEnd);
+      x = 244 - p * 96;
+      y = 130 + 24 * Math.sin(p * Math.PI);
+      rot = -12 * Math.cos(p * Math.PI * 2);
+      dir = -1;
+      opacity = 0.92;
+
+    } else if (t < SEA.breachStart + SEA.breachDuration){
+      // ── the breach: a true ballistic arc up through the surface
+      const tau = t - SEA.breachStart;
+      x = 148 + SEA.breachVX * tau;
+      y = 118 + SEA.breachVY * tau + 0.5 * SEA.breachG * tau * tau;
+      const vyNow = SEA.breachVY + SEA.breachG * tau;
+      // follow the flight path, but keep the tilt within a range that still
+      // reads as a seal porpoising rather than a rocket taking off
+      const pathAngle = Math.atan2(vyNow, SEA.breachVX) * 180 / Math.PI;
+      rot = Math.max(-46, Math.min(46, pathAngle));
+      dir = 1;
+      opacity = y < SEA.surfaceY ? 1 : 0.94;
+
+      // splash the instant it punches back down through the surface
+      if (!splashed && vyNow > 0 && y >= SEA.surfaceY){
+        splashed = true;
+        marker.setAttribute('cx', String(x));
+        spawnSplashDroplets();
+        spawnRipple(x, 0,   3.4);
+        spawnRipple(x, 110, 4.2);
+        spawnRipple(x, 220, 5.0);
+      }
+
+    } else {
+      // ── sinking away
+      const p = (t - SEA.breachStart - SEA.breachDuration) / SEA.sinkDuration;
+      x = 148 + SEA.breachVX * SEA.breachDuration;
+      y = 118 + p * 26;
+      rot = 30 - p * 30;
+      dir = 1;
+      opacity = 0.9 * (1 - p);
+    }
+
+    seal.setAttribute('transform',
+      `translate(${x.toFixed(2)}, ${y.toFixed(2)}) rotate(${(rot * dir).toFixed(2)}) scale(${(dir * S).toFixed(3)}, ${S})`);
+    seal.setAttribute('opacity', opacity.toFixed(3));
+
+    // a light bubble trail while it's under
+    if (y > SEA.surfaceY + 8 && now - lastBubble > 90){
+      lastBubble = now;
+      spawnBubble(x - 34 * dir, y + 4);
+    }
+
+    if (t >= total){
+      callback();
+      overlay.hidden = true;
+      document.getElementById('ripple-layer').innerHTML = '';
+      document.getElementById('bubble-layer').innerHTML = '';
+      return;
+    }
+    requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
 }
