@@ -9,6 +9,10 @@ const CONFIG = {
   TARGET_DATE_ISO: "2027-01-09T07:55:00+08:00", // 9 Jan 2027, 7:55am SGT — when you meet again
   START_DATE_ISO: "2026-09-11T00:00:00+08:00",  // the day the countdown "starts" — used for the progress bar
 
+  // How to read an all-numeric date like 8/9/2026 in your sheet.
+  // "day-first" reads it as 8 September. "month-first" reads it as 9 August.
+  DATE_ORDER: "day-first",
+
   // Which month the calendar opens on. Months are 0-indexed: 7 = August.
   CALENDAR_START_YEAR: 2026,
   CALENDAR_START_MONTH: 7, // August
@@ -18,12 +22,6 @@ const CONFIG = {
   // doesn't mix with anyone else's — e.g. "yourname-bfname-2026".
   LOVE_NAMESPACE: "seeing-you-again-soon-CHANGE-ME",
   LOVE_COUNTER: "send-love",
-
-  // Push notification when either of you taps "send love" — uses ntfy.sh,
-  // a free no-signup push service. Change this to something unique to you
-  // two (nobody else should be able to guess it), then both of you install
-  // the ntfy app (iOS/Android) and subscribe to this exact topic name.
-  NTFY_TOPIC: "seeing-you-again-soon-love-CHANGE-ME",
 
   // His location, for the timezone clock and weather widget.
   HIS_CITY_NAME: "Irvine, California",
@@ -41,7 +39,7 @@ const CONFIG = {
 // exactly (including .jpeg vs .jpg). If a file is missing, the page
 // quietly falls back to the bundled .svg version.
 const MOOD_ICONS = {
-  surprise: { src: "icons/moods/penguin-angry.jpeg",   alt: "a mystery penguin",                     label: "surprise me" },
+  surprise: { src: "icons/moods/penguin-angry.jpeg",   alt: "a mystery penguin",                     label: "it's a surprise!" },
   sad:      { src: "icons/moods/penguin-sad.jpeg",     alt: "a sad little penguin",                  label: "sad" },
   homesick: { src: "icons/moods/penguin-homesick.jpeg",alt: "a wistful penguin looking toward home", label: "homesick" },
   happy:    { src: "icons/moods/penguin-happy.jpg",    alt: "a cheerful penguin with open flippers", label: "happy hehe" },
@@ -118,25 +116,27 @@ function updateClocks(){
   setHand('his-min',  his.m * 6 + his.s * 0.1);
   setSecondHand('his-sec', his.s);
 
-  // the gap between you two, in plain words
+  // the gap between you two, written from HIS side of the world
   const now = new Date();
+  // positive when Singapore is ahead of Irvine, which it always is
   const diff = utcOffsetHours(CONFIG.YOUR_TIMEZONE, now) - utcOffsetHours(CONFIG.HIS_TIMEZONE, now);
   const whole = Math.round(Math.abs(diff));
-  const direction = diff >= 0 ? 'behind' : 'ahead of';
+  const direction = diff >= 0 ? 'ahead of' : 'behind';
 
+  // "same day" is judged from his calendar date, not hers
   const dayIn = tz => new Intl.DateTimeFormat('en-CA', {
     timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit'
   }).format(now);
-  const sameDay = dayIn(CONFIG.YOUR_TIMEZONE) === dayIn(CONFIG.HIS_TIMEZONE);
+  const sameDay = dayIn(CONFIG.HIS_TIMEZONE) === dayIn(CONFIG.YOUR_TIMEZONE);
   const dayNote = sameDay
-    ? "you're on the same date today"
-    : (diff >= 0 ? "he's still on yesterday" : "he's already on tomorrow");
+    ? "you're both on the same date right now"
+    : (diff >= 0 ? "she's already on tomorrow" : "she's still on yesterday");
 
   document.getElementById('tz-gap').textContent =
-    `Irvine is ${whole} hours ${direction} you — ${dayNote}.`;
+    `Singapore is ${whole} hours ${direction} you — ${dayNote}.`;
 }
 
-document.getElementById('his-city-label').textContent = CONFIG.HIS_CITY_NAME;
+document.getElementById('his-city-label').textContent = 'your time \u2014 Irvine';
 updateClocks();
 setInterval(updateClocks, 1000);
 
@@ -356,44 +356,118 @@ function parseCSV(text){
 
 let ALL_NOTES = [];
 
-function parseNoteDate(str){
-  if (!str) return null;
-  str = str.trim();
-  let d = new Date(str);
-  if (!isNaN(d.getTime())) return d;
+const MONTH_NAMES = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 
-  const months = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
-  const m = str.toLowerCase().match(/(\d{1,2})[a-z]*\s+([a-z]{3,})|([a-z]{3,})\s+(\d{1,2})/);
-  if (!m) return null;
-  const day = parseInt(m[1] || m[4], 10);
-  const monStr = m[2] || m[3];
-  const monIdx = months.findIndex(mo => monStr.startsWith(mo));
-  if (monIdx < 0 || !day) return null;
-
+// Works out which year a bare "14 Aug" belongs to, using the exchange window.
+function inferYear(monthIdx){
   const start = new Date(CONFIG.START_DATE_ISO);
   const target = new Date(CONFIG.TARGET_DATE_ISO);
-  let year = start.getFullYear();
-  if (monIdx === target.getMonth() && target.getFullYear() !== start.getFullYear()){
-    year = target.getFullYear();
+  if (target.getFullYear() === start.getFullYear()) return start.getFullYear();
+  // only the months at or before the target's month have wrapped round into
+  // the next year — e.g. a January note during a Sept-to-Jan exchange
+  return monthIdx <= target.getMonth() ? target.getFullYear() : start.getFullYear();
+}
+
+// Accepts the formats a Google Sheet date column actually shows up as:
+// 2026-08-14, 14/8/2026, 8/14/2026, 14 Aug, Aug 14, 14 August 2026, 14-8-26.
+function parseNoteDate(str){
+  if (str === undefined || str === null) return null;
+  str = String(str).trim();
+  if (!str) return null;
+
+  // ISO first — built by hand so it lands on the local day, not UTC midnight
+  let m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+
+  // a month written in words, in either order
+  const lower = str.toLowerCase();
+  m = lower.match(/^(\d{1,2})\s*[a-z]{0,2}[\s.\-]+([a-z]{3,})[\s,.\-]*(\d{4})?/)
+   || lower.match(/^([a-z]{3,})[\s.\-]+(\d{1,2})[a-z]{0,2}[\s,.\-]*(\d{4})?/);
+  if (m){
+    const dayFirst = /^\d/.test(m[1]);
+    const day = parseInt(dayFirst ? m[1] : m[2], 10);
+    const monStr = dayFirst ? m[2] : m[1];
+    const monthIdx = MONTH_NAMES.findIndex(mo => monStr.startsWith(mo));
+    if (monthIdx >= 0 && day >= 1 && day <= 31){
+      return new Date(m[3] ? +m[3] : inferYear(monthIdx), monthIdx, day);
+    }
   }
-  return new Date(year, monIdx, day);
+
+  // all-numeric: 14/8/2026, 14-8-26, 8/14/2026
+  m = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})?$/);
+  if (m){
+    let a = +m[1], b = +m[2];
+    let year = m[3] ? +m[3] : null;
+    if (year !== null && year < 100) year += 2000;
+    // if one of them can't be a month, that one is the day
+    let day, monthIdx;
+    if (a > 12){ day = a; monthIdx = b - 1; }
+    else if (b > 12){ day = b; monthIdx = a - 1; }
+    else if (CONFIG.DATE_ORDER === 'month-first'){ monthIdx = a - 1; day = b; }
+    else { day = a; monthIdx = b - 1; }
+    if (monthIdx >= 0 && monthIdx <= 11 && day >= 1 && day <= 31){
+      return new Date(year !== null ? year : inferYear(monthIdx), monthIdx, day);
+    }
+  }
+
+  // last resort — let the browser try
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+// Finds the date and message columns from the header row, so it doesn't
+// matter which order you put them in. Falls back to A = date, B = message.
+function findColumns(rows){
+  const first = (rows[0] || []).map(c => String(c).trim().toLowerCase());
+  let dateCol = first.findIndex(h => /^(date|day|when)\b/.test(h));
+  let msgCol  = first.findIndex(h => /^(message|note|text|content)s?\b/.test(h));
+
+  // A real header row never has a readable date in its date cell. Without
+  // this check a first note reading "1 Aug, first note" gets eaten as a header.
+  const looksLikeHeader =
+    (dateCol >= 0 || msgCol >= 0) && !parseNoteDate(first[dateCol >= 0 ? dateCol : 0]);
+
+  if (dateCol < 0) dateCol = 0;
+  if (msgCol < 0)  msgCol = dateCol === 0 ? 1 : 0;
+  return { dateCol, msgCol, hasHeader: looksLikeHeader };
 }
 
 function renderNotes(rows){
-  const dataRows = rows.slice(1).filter(r => r[1] && r[1].trim());
+  if (!rows.length){
+    document.getElementById('note-body').textContent = "No notes yet — add one to your sheet!";
+    document.getElementById('note-date').textContent = "";
+    ALL_NOTES = [];
+    renderCalendar();
+    return;
+  }
+
+  const { dateCol, msgCol, hasHeader } = findColumns(rows);
+  const dataRows = (hasHeader ? rows.slice(1) : rows)
+    .filter(r => r[msgCol] && String(r[msgCol]).trim());
+
   ALL_NOTES = dataRows.map(r => ({
-    dateStr: r[0] || '',
-    message: r[1],
-    date: parseNoteDate(r[0])
+    dateStr: r[dateCol] || '',
+    message: String(r[msgCol]),
+    date: parseNoteDate(r[dateCol])
   }));
+
+  // a readable report in the console, so a mis-formatted date column is
+  // obvious instead of silently producing an empty calendar
+  const unparsed = ALL_NOTES.filter(n => !n.date);
+  console.log(`Notes loaded: ${ALL_NOTES.length} (date column ${dateCol}, message column ${msgCol}).`);
+  if (unparsed.length){
+    console.warn(
+      `${unparsed.length} note(s) had a date this page couldn't read, so they won't appear on the calendar. ` +
+      `First few: ${unparsed.slice(0, 5).map(n => JSON.stringify(n.dateStr)).join(', ')}`);
+  }
 
   if (!dataRows.length){
     document.getElementById('note-body').textContent = "No notes yet — add one to your sheet!";
     document.getElementById('note-date').textContent = "";
   } else {
-    const latest = dataRows[dataRows.length - 1];
-    document.getElementById('note-body').textContent = latest[1];
-    document.getElementById('note-date').textContent = latest[0] || "";
+    const latest = ALL_NOTES[ALL_NOTES.length - 1];
+    document.getElementById('note-body').textContent = latest.message;
+    document.getElementById('note-date').textContent = latest.dateStr;
   }
 
   renderCalendar(); // the calendar lives on the home page now, so keep it in sync
@@ -527,6 +601,42 @@ function renderCalendar(){
 
     grid.appendChild(cell);
   }
+
+  updateCalendarHint(Object.keys(notesByDay).length);
+}
+
+// August 2026 is before the exchange starts, so it will usually be empty.
+// Rather than looking broken, point at the month that actually has notes.
+function updateCalendarHint(notesThisMonth){
+  const hint = document.getElementById('calendar-hint');
+  if (!hint) return;
+  hint.innerHTML = '';
+
+  if (notesThisMonth){
+    hint.textContent = "tap a highlighted date to read that day's note";
+    return;
+  }
+
+  const dated = ALL_NOTES.filter(n => n.date);
+  if (!dated.length){
+    hint.textContent = ALL_NOTES.length
+      ? "notes are loading, but none of their dates could be read — see the console"
+      : "no notes for this month yet";
+    return;
+  }
+
+  const latest = dated.reduce((a, b) => (a.date > b.date ? a : b)).date;
+  hint.appendChild(document.createTextNode('no notes this month — '));
+  const link = document.createElement('button');
+  link.type = 'button';
+  link.className = 'cal-jump';
+  link.textContent = `go to ${latest.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
+  link.addEventListener('click', (e) => {
+    e.stopPropagation();
+    calendarMonth = new Date(latest.getFullYear(), latest.getMonth(), 1);
+    renderCalendar();
+  });
+  hint.appendChild(link);
 }
 renderCalendar();
 loadNotes();
@@ -576,19 +686,10 @@ async function loadLoveCount(){
 }
 loadLoveCount();
 
-function sendLoveNotification(){
-  fetch(`https://ntfy.sh/${CONFIG.NTFY_TOPIC}`, {
-    method: 'POST',
-    body: 'sent you some love \ud83d\udc9b',
-    headers: { 'Title': 'seeing you again soon' }
-  }).catch(err => console.error('Could not send push notification:', err));
-}
-
 document.getElementById('send-love-btn').addEventListener('click', async () => {
   const btn = document.getElementById('send-love-btn');
   btn.classList.add('is-sending');
   setTimeout(() => btn.classList.remove('is-sending'), 400);
-  sendLoveNotification();
   try {
     const res = await fetch(loveApiUrl('up'));
     const data = await res.json();
@@ -782,6 +883,15 @@ document.querySelectorAll('[data-back]').forEach(btn => {
   btn.addEventListener('click', () => transitionToView(btn.dataset.back));
 });
 
+// the title in the corner always takes you home
+document.getElementById('home-link').addEventListener('click', () => {
+  if (document.getElementById('view-home').classList.contains('is-active')){
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } else {
+    transitionToView('view-home');
+  }
+});
+
 // ═════════════════════════ mood grid ═════════════════════════
 const MOODS = ['surprise', 'sad', 'homesick', 'happy', 'general'];
 const moodGrid = document.getElementById('mood-grid');
@@ -853,23 +963,48 @@ function formatLetterText(text){
     .join('');
 }
 
+// Attaches whatever media a letter carries. Every field takes either a single
+// path or a list of paths, so a letter can hold as many photos as you like:
+//   photo:  "media/one.png"
+//   photo:  ["media/one.png", "media/two.png"]
+//   video:  "media/clip.mov"
+//   audio:  "media/voice-note.m4a"
+function asList(value){
+  if (!value) return [];
+  return Array.isArray(value) ? value.filter(Boolean) : [value];
+}
+
 function renderLetterMedia(env){
   const wrap = document.getElementById('letter-media');
   wrap.innerHTML = '';
-  if (env.photo){
+
+  asList(env.photo).concat(asList(env.photos)).forEach((src, i, all) => {
     const img = document.createElement('img');
-    img.src = env.photo;
-    img.alt = 'a photo for you';
+    img.src = src;
+    img.loading = 'lazy';
+    img.alt = all.length > 1 ? `photo ${i + 1} of ${all.length} for you` : 'a photo for you';
     img.className = 'letter-photo';
     wrap.appendChild(img);
-  }
-  if (env.audio){
+  });
+
+  asList(env.video).concat(asList(env.videos)).forEach(src => {
+    const video = document.createElement('video');
+    video.src = src;
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = 'metadata';
+    video.className = 'letter-video';
+    wrap.appendChild(video);
+  });
+
+  asList(env.audio).concat(asList(env.audios)).forEach(src => {
     const audio = document.createElement('audio');
-    audio.src = env.audio;
+    audio.src = src;
     audio.controls = true;
+    audio.preload = 'metadata';
     audio.className = 'letter-audio';
     wrap.appendChild(audio);
-  }
+  });
 }
 
 function openMood(mood){

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&family=Permanent+Marker&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Work+Sans:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap');
 
 :root{
   --bg: #fdf3d3;
@@ -19,9 +19,7 @@
   --mono: 'Space Mono', monospace;
   --sf: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
 
-  /* chalkboard / marker-pen face, used for the clock + weather numbers */
-  --marker: 'Permanent Marker', 'Chalkboard SE', 'Bradley Hand', 'Comic Sans MS', cursive;
-  /* the countdown numbers */
+  /* every number on the page — countdown, clocks, temperature */
   --helv: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
@@ -102,7 +100,13 @@ html,body{
   font-weight: 600;
   color: var(--gold-soft);
   letter-spacing: 0.3px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.15s ease;
 }
+.site-logo:hover{ color: var(--green); }
 
 .site-footer{
   position: relative; z-index: 1;
@@ -367,14 +371,16 @@ html,body{
 .clockface line[id$="-hour"],
 .clockface line[id$="-min"]{ transition: transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1); }
 
-/* clock numbers — chalkboard / marker pen */
+/* clock numbers — Helvetica Neue, bold + italic */
 .clock-digital{
-  font-family: var(--marker);
-  font-size: 25px;
+  font-family: var(--helv);
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: -0.3px;
+  font-size: 24px;
   line-height: 1.1;
   color: var(--gold-soft);
   margin: 0;
-  letter-spacing: 0.5px;
 }
 .tz-gap{
   font-family: var(--body);
@@ -402,9 +408,12 @@ html,body{
 }
 .weather-icon svg{ width: 100%; height: 100%; display: block; }
 
-/* weather number — chalkboard / marker pen */
+/* weather number — Helvetica Neue, bold + italic */
 .weather-temp{
-  font-family: var(--marker);
+  font-family: var(--helv);
+  font-weight: 700;
+  font-style: italic;
+  letter-spacing: -0.5px;
   font-size: 34px;
   line-height: 1.1;
   color: var(--gold-soft);
@@ -496,6 +505,18 @@ html,body{
   outline: 1.5px solid var(--green);
   outline-offset: 1px;
 }
+.cal-jump{
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--gold-soft);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.cal-jump:hover{ color: var(--green); }
+
 .calendar-hint{
   font-family: var(--sf);
   font-size: 11px;
@@ -718,6 +739,12 @@ html,body{
 }
 .letter-photo{ width: 100%; border-radius: 8px; display: block; }
 .letter-audio{ width: 100%; }
+.letter-video{
+  width: 100%;
+  border-radius: 8px;
+  display: block;
+  background: #000;
+}
 
 /* speech bubble shown on the "general" mood envelope page */
 .speech-bubble{
