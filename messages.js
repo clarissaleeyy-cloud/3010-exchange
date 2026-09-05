@@ -46,10 +46,10 @@ okie this is my yappy yap of the day!!! as always i miss u my love for u is burs
     { label: "letter 1 :(", text: `WHY ARE YOU SAD! please tell me more. but here’s another (bad) joke! why is golf so addictive?
 
 it’s a HOLE lot of fun :D hahahaha cheer up soon! sending a virtual hug rn~ `,
-      photo: ["media:sad-letter1.png", "media:sad-letter2.png"] },
+      photo: ["media/sad-letter1.png", "media/sad-letter2.png"] },
     { label: "letter 2", text: `here's a song instead! 
 THE COCONUT NUT IS A BIG BIG NUT IF U EAT TOO MUCH U GET VERY FAT `,
-      audio: "media:sad-letter2.m4a" },
+      audio: "media/sad-letter2.m4a" },
     { label: "letter 3", text: `hello dear!! m not q sure if ure feeling sad today because of me… HOPEFULLY NOT but i’m assuming in the 4 months ure gone we would fight at least once right HAHAHAHA IF URE NOT maybe u shd close this and read another msg!!! maybe u wont open my letter when ure upset w me… but regardless!! i would just like to say that when we r living miles apart but fighting, it’s prob even harder for u to Feel my love 🤣 so ull prob be focusing on all the unhappiness!!! and i might not remember to tell u that i love u and care for u, so i’m telling it to u rn!! please always remember that!!! at the end of the day i do believe that we r not each other’s enemy 😁
 
 please also rmb that i get sad when we fight 😔😔😔 ask me if i’m ok!!!! i’ll appreciate it lots ❤️ love u dear! feel better soon 
@@ -71,7 +71,7 @@ https://maps.app.goo.gl/rwzjeaByvkrS1qmu8
 https://www.sporcle.com/games/yellowflip999/fill-the-singapore-mrt-map
 ` },
     { label: "letter 4", text: `a little piece of home for u heheh HAHAHA go and watch the singaporean driving traffic videos !!! or hokkien videos about people cursing and laughing`,
-      video: "media:homesick-letter2.mov" }
+      video: "media/homesick-letter2.mov" }
   ],
 
   happy: [
@@ -94,7 +94,7 @@ but i think my absolute fav part was js squishing tgt at the playground swing HH
       effect: "hearts" },
     { label: "letter 5", text: `hello dear!!! today’s thought of the day is that sometimes i get randomly sad / tired but i’m glad that somehow u always manage to cheer me up!! regardless of whether it’s u calling me to talk to me whenever i’m sad or distracting me by talking nonsense or just overall sending encouraging stickers, i’m grateful that u always manage (altho sometimes i think udek im sad) to make me happy heheh MAYBE i’m just easily comforted (unlike u BOOO) but yes i really do appreciate it!! the thought of not being able to call randomly whenever we want to and meet up is Absolutely Depressing 😔😔 I MISS U! can’t wait till u come back ehehhhe
  `,
-      video: "media:iloveyou-letter5.MOV" },
+      video: "media/iloveyou-letter5.MOV" },
     { label: "letter 6", text: `hello bae! not sure if i said this in the vday letter (i’m trying to think of New things about u that i love 🤣 cringe…) but ur smile is rly cute heheh the other day renkai saw ur tlbb to me and said ur smile is adorbs and internally i was like I AGREE (but externally i said “gay” oops) when ure happy ure all 😬😁 it’s an in between of both cause ur smile is kind of rectangular (uk bts v has a similar smile LOLOL and he was named most handsome face in the world SOOO 🤣🤣) anw u look so genuinely happy HAHAHA and i love to see it!!! makes all our photos look cute too heheh send me a smile NOW!!!` },
     { label: "letter 7", text: `replace this` }
   ]
