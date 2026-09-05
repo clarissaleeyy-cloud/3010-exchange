@@ -923,9 +923,13 @@ MOODS.forEach(mood => {
 });
 
 function openSurprise(){
-  const allLetters = (typeof MOOD_MESSAGES !== 'undefined')
-    ? Object.values(MOOD_MESSAGES).flat()
-    : [];
+  // draws from the "surprise" list in messages.js; if that's empty it
+  // falls back to picking any letter from any mood
+  const pool = (typeof MOOD_MESSAGES === 'undefined') ? []
+    : (MOOD_MESSAGES.surprise && MOOD_MESSAGES.surprise.length
+        ? MOOD_MESSAGES.surprise
+        : Object.values(MOOD_MESSAGES).flat());
+  const allLetters = pool;
   if (!allLetters.length) return;
 
   const pick = allLetters[Math.floor(Math.random() * allLetters.length)];
