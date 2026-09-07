@@ -37,9 +37,25 @@ and then i forgot when exactly i think might be during the sch song or smth… i
 then uk somehow i forgot why the PARENTS came to help clean. like i think my mom and scott’s mom? (unless my memory is trolling me) were helping me clear up and i was js thinking fkfkfk i hope they dont realise it’s DILUTED PEEEEE. anw then my skirt WET RIGHT. but i was like ohno my water spill on my skirt so i went to the toilet to “clean it up” and i was like trying to dry my skirt w the handdryer… anw it was really rabz… and now looking back on it i feel like the parents probably knew what was going on because no way right HAHAHA but i’m glad no one ever called me out for it and now it’s just a secret i’ll take to my grave…
 okie this is my yappy yap of the day!!! as always i miss u my love for u is bursting just like my bladder HAHAHAHAH kidding muacksies!!! 
 ` },
-    { label: "letter 2", text: `hello! i hope you have been making good use of my digicam 😡😡 (yes by now i hv decided that ig ill lend it to u… since i’m mostly stuck at home 😔☹️) I BETTER SEE AT LEAST 100 photos!!! OHYA and also my stupid little pingu camera gift for u HAHAHAHA if you haven’t used it at all please read the sd card at least… there r random videos for u 🤣🤣 (but i kind of abandoned that idea so the videos are abit random) please use that camera too!!!! the quality is dogshit but i do think it is slightly a vibe heheh ur homework is to make a vlog out of the videos? HAHAHA kidding but i can’t wait to look at all ur pics and hear all the stories abt ur exchange
-` },
-    { label: "letter 3", text: `And another.` }
+    { label: "letter 2", text: `hmm what shall my yap be for today… lemme tell u about another really embarrassing moment of my life… it is about me and scott (the pri sch guy bestie who is taken) but once again pls b reassured that ill never be interested in this guy again HAHAHA
+
+kay so our pri school class teachers organised this “hunger games”-themed sports day for us!! idt uve read or watched hunger games right so lemme try and explain the references to u… the highlight of the sports day was like basically a nerf gun war, and the hunger games aspect was that every class would select 2 people to represent them (like the 2 tributes per district in hunger games). so scott and i played (fsr idk why!) and we made it!! to the end!! tbf it was mostly him killing people and me dodging and running for my life… my aim sucks 🤣 
+
+anw so we were the last 2 right and idk why we didn’t win i think only one person could win?? or maybe we made the whole thing up. but basically at the end of hunger games, katniss and peeta (the main characters) were the last 2 standing right, then suddenly there was an announcement that only one person can win (aka they need to kill each other). and because they “loved” each other and wanted to spite the gamemakers, they attempted to eat a poisonous berry each and commit suicide so there would be no winner at all. ok so with this in mind, me and scott tried to “do the same thing” by like shooting each other with the nerf gun… tbh idk if anyone even remembers or saw this moment but for me whenever i think back about it IT IS SO EMBARRASSING
+
+like we did this in front of majority of our batch 🤯🤯🤯 and i think it was unnecessary cause there was someone left who didn’t die i think… which is why the game didnt end… then when we realised we killed that person and the game ended. so like we did not need to be so dramatic and “commit suicide” 🤣🤣 anw this is another one of my top few most embarrassing moments.. when i really was like headoverheels puppy love crush energy and did such a cringe thing in front of everyone. i dont rmb the exact details of the moment le but ill rmb the embarrassment i felt then for life` },
+    { label: "letter 3", text: `another random yap is that uk how i love hamilton (the musical) so much! when i was sec2…? this group of rgs kids decided to form a “theatre kid” friend group thing and perform our own hamilton musical! and i joined! cause fsr from young i’ve had this unfounded confidence about my singing abilities 🤣🤣 say reals idk why i always think i can sing when ive never even been accepted into choir 😔😔 HAHAHA anw so i joined with kimmie and nicolle (our other pri sch friend in rgs whom i dont talk to anymore).
+
+i auditioned for eliza (the female lead btw) and the King (cause i liked his song) HAHAHA anw it was lowkey so legit like we wld go in to rooms one by one and sing our auditioned songs. and i was too shy to sing at home w everyone so i only ever practised in the toilet (so evidently i was not great esp since some of the ppl there could really sing). anw so they didnt even let me audition for eliza because they had already picked someone else for that role by the time i auditioned 😔😔 and ofc i was disappointed but tbh the girl they chose was really good so wtv la HAHAHA and i got assigned the really small role of a girl called peggy. shes eliza and angelica’s sister but all she really sings r the words “and peggy” 🤣🤣🤣🤣 but in the end this musical thing never happened sad. this cld have been the start of my theatre kid era!! but alas it didnt happen` },
+ { label: "letter 4", text: `i just drank my coldcold water HAHAHA random fact of the day is i love cold water ifl different temperature water tastes different and ill fight anyone who disagrees HAHAHA i love cold and hot water room temp water sucks.` },
+
+{ label: "letter 5", text: `another random fact! i have a keloid (dk if uk what this is but basically when u hv a wound then ur skin heals but it OVERgrows so there’s a protruding lump of skin over the wound) on my right kneecap!!! not sure if you’ve ever noticed (probably not it’s p small now) HAHAHA but it’s from when i fell in primary school! i think it was p2? or p3. when i got off the school bus, and i ran through the grassfield to get to the parade square for morning assembly, except i tripped over something and fell. and i think the grass was like p sharp or smth so it cut me and i was bleeding like craaaaazy. i think for primary 2 me that was like the most pain ive felt in my 8 years of living HAHHAHA and i fell with my GIGANTIC SCHOOL BAG so it crushed me too. then my friend brought me to the general office who had to patch me up and i walked around with a gigantic gauze and plaster on my knee! and now it’s long healed but there’s a scar (photo for you because idt you know this exists)` 
+photo: ["media/random-letter5.png"] },
+ { label: "letter 6", text: `idk if this is a common experience but in primary school i used to make towers out of my pens and pencils and highlighters during exams HAHAAH like when i was done with the paper and done checking and overall just Very bored i would make towers out of my pens!!! so i would purposely bring aloooot of stationery into the exam venue just so i could play with them HAHAHAHA also i used to draw random things / calligraph random lyrics (very uglily) on my exam paper and sing to myself in the middle of the exam HAHAHA overall i think i was a v distracting person to sit near to during an exam oopsies 
+
+another random exam fact is in j2 on the day of taylor swift concert presale tickets, i was hving my math paper 2 exam! (the stats one) and i was so stressed because the presale start time was like 1h after the exam ended. so throughout the whole second half of the exam i was suuper distracted and i kept checking the clock and my heart was palpitating OOOOOPS. in the end i barely passed the second half of the paper HAHAHAHAH it was Bad oopsies but i got my tickets in the end so who cares !!!` },
+ { label: "letter 7", text: `my childhood dream was actl to be a pianist HAHA like i think playing the piano was the one passion / interest that i genuinely developed on my own without any external influence. surprisingly my sis never played piano, and my friends also never played piano. and my parents never made me learn it HAHAHA so i genuinely started liking piano after walking past a piano class otw to the toilet at my tuition centre and hearing them play. and i was like wow this sounds so nice i really wna learn HAHAH and until now i still REALLY love piano but fsr i just suck so bad at it and i have no patience or resilience to keep practising to get really good at a song… so depressing in another life i wish i was good at piano` },
+
   ],
 
   sad: [
@@ -56,8 +72,15 @@ please also rmb that i get sad when we fight 😔😔😔 ask me if i’m ok!!!!
 
 here’s a video of waves 🌊 
 https://www.youtube.com/watch?v=hw32XIVdHCU` },
-    { label: "letter 4", text: `REPLACE` },
-    { label: "letter 5", text: `REPLACE` }
+    { label: "letter 4", text: `you’re sad now as i am writing this :( who / what is making you sad!! lemme (ง’̀-‘́)ง them rn!! sometimes (most of the time) idrk what to do/say when you’re sad 😔😔 ifl this is a science experiment that i’m still trying to figure out HAHAH but regardless of wtv nonsense i’m saying, this sadness / tiredness / upset-ness will pass !! and when it does pass i will still be here for u heheh. it’ll be okay! sending many hugs and hoping you’ll wake up tomorrow feeling more refreshed and happier :D
+
+here is a cute pingu video for u! 
+https://www.tiktok.com/@pingu/video/7621697896315931917?_r=1&_t=ZS-99SBqaUNg9A
+https://www.youtube.com/watch?v=LZ5gyhj5qeE` },
+    { label: "letter 5", text: `hello! if you’ve made it all the way here icb you’ve been sad for 5 times :( in 4 months!! the world is not being very fair to you ☹️☹️ big boo! for your little pick-me-up/cheer-up thing, watch this video !!! 
+https://www.youtube.com/watch?v=DSSUOcuUego
+(8 years ago mayb they’ve truly fallen off)
+(I’M KIDDING ily here’s a more recent one https://www.youtube.com/watch?v=VoUmriKF-sI)` }
   ],
 
   homesick: [
@@ -66,7 +89,14 @@ https://www.youtube.com/watch?v=hw32XIVdHCU` },
 https://maps.app.goo.gl/rwzjeaByvkrS1qmu8
 
 (after knowing where your uni housing is these places all seem FAR but UH i hope you figure it out.. HAHAHA)` },
-    { label: "letter 2", text: `REPLACE` },
+    { label: "letter 2", text: `here’s a recipe for all the SG food (i gave up on SG now it’s just asian) u might want to make !!! 
+1. chicken rice https://thewoksoflife.com/hainanese-chicken-rice/#recipe https://www.youtube.com/watch?v=fX1cajv0CXY 
+2. watercress soup?? (but hard to find the wolfberries and stuff)  https://www.youtube.com/watch?v=8UPa76Hfdjo
+
+3. https://youtube.com/shorts/9EuWNhSzvCk?is=m3Rzs2J9Q81p5vmy not asian but it looks gooddd
+
+4. https://vt.tiktok.com/ZSqM2tHm5/ mayb tiktok isnt the best place for recipes but ive alw wanted to make this ifl it’s idiotproof 
+5. https://vt.tiktok.com/ZSqMjsKJu/ round 2 for our oyakodon` },
     { label: "letter 3", text: `here’s a link to the singapore mrt map game heheh that you’re so damn good at 🤣🤣 a little piece of sg!!
 https://www.sporcle.com/games/yellowflip999/fill-the-singapore-mrt-map
 ` },
@@ -78,7 +108,9 @@ https://www.sporcle.com/games/yellowflip999/fill-the-singapore-mrt-map
     { label: "ichi", text: `hello my dear boyfriend!! YOU’RE HAPPY! so i’m happy HEHEHEH what r u happy about please text me and let me know so we can #spreadthejoy <3 im glad you are absolutely elated HAVE THE BEST DAY
 ` },
     { label: "ni", text: `YAYY fireworks for you HEHEH i’m glad today has been a Good Day!!! do tell me more i miss your yaps heheh i hope everyday continues to be a GOOD GOOD DAY! kissies from 100000km away heheh bluetooth connected!!!`, effect: "fireworks" },
-    { label: "san", text: `And another.` },
+    { label: "san", text: `HELLOOO i realised it’s quite hard to reply to your happiness when i have no idea what’s making you happy! why did i create this section 🤣🤣 BUT YAYYYYY 😃😄😁😆 on the spectrum of happy faces which one r u!! HAHAHA okie im glad ure in a great mood heheh as alw share ur happy w me
+https://vt.tiktok.com/ZSqYvs2oK/
+(hehe shall we try this)` },
     { label: "yon", text: `REPLACE` },
     { label: "go", text: `REPLACE` }
   ],
@@ -96,6 +128,10 @@ but i think my absolute fav part was js squishing tgt at the playground swing HH
  `,
       video: "media/iloveyou-letter5.MOV" },
     { label: "letter 6", text: `hello bae! not sure if i said this in the vday letter (i’m trying to think of New things about u that i love 🤣 cringe…) but ur smile is rly cute heheh the other day renkai saw ur tlbb to me and said ur smile is adorbs and internally i was like I AGREE (but externally i said “gay” oops) when ure happy ure all 😬😁 it’s an in between of both cause ur smile is kind of rectangular (uk bts v has a similar smile LOLOL and he was named most handsome face in the world SOOO 🤣🤣) anw u look so genuinely happy HAHAHA and i love to see it!!! makes all our photos look cute too heheh send me a smile NOW!!!` },
-    { label: "letter 7", text: `replace this` }
+    { label: "letter 7", text: `hello dear! today’s msg shall be A little deeper than usual bah!!! tbh at the start when we kept fighting (oops) i did consider whether or not we were fundamentally compatible 😔 because i didn’t really have anything else to compare this with uk i had no clue if having disagreements this early on was even normal!! but one thing i realised after all those fights were that even at our Lowest moments, it seems like to you everything would always pass! (im not sure if ive said this before)
+
+in the sense that ig while i was worried all these fights would make us break up, you never really considered that possibility (i think). and that was actually really comforting! i think sometimes i overthink and overdramatise our disagreements in our head… i’m Constantly trying to decide if this is a BIGBIG problem or just a smallsmall problem. but with u i have learnt that sometimes it’s normal to fight! and honestly i don’t need to stress so much about it… 
+
+essentially what i am trying to say is that i’m grateful for you because you have made me no longer scared that you’re going to leave everytime we fight! and it is alot more reassuring to fight with you knowing that eventually we’ll get over it 🥰😊 (im cringing again) HAHAHA anw all this to say that i love u! even with all our fights… i can’t wait to see u again and (i guess inevitably) fight again` }
   ]
 };
