@@ -103,8 +103,9 @@ https://maps.app.goo.gl/rwzjeaByvkrS1qmu8
     { label: "letter 3", text: `here’s a link to the singapore mrt map game heheh that you’re so damn good at 🤣🤣 a little piece of sg!!
 https://www.sporcle.com/games/yellowflip999/fill-the-singapore-mrt-map
 ` },
-    { label: "letter 4", text: `a little piece of home for u heheh HAHAHA go and watch the singaporean driving traffic videos !!! or hokkien videos about people cursing and laughing`,
-      video: "media/homesick-letter2.mov" }
+    { label: "letter 4", text: `a little piece of home for u heheh HAHAHA go and watch the singaporean driving traffic videos !!! or hokkien videos about people cursing and laughing
+https://www.youtube.com/watch?v=ZzS5rPaZW9w&list=PL3qq1V1-nuoJPGu1xsHVTqBrG6ZJv--9p
+https://www.youtube.com/@SGRoadVigilanteSGRV/videos`}
   ],
 
   happy: [
