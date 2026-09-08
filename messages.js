@@ -64,7 +64,8 @@ another random exam fact is in j2 on the day of taylor swift concert presale tic
 it’s a HOLE lot of fun :D hahahaha cheer up soon! sending a virtual hug rn~ `,
       photo: ["media/sad-letter1.png", "media/sad-letter2.png"] },
     { label: "letter 2", text: `here's a song instead! 
-THE COCONUT NUT IS A BIG BIG NUT IF U EAT TOO MUCH U GET VERY FAT `,
+THE COCONUT NUT IS A BIG BIG NUT IF U EAT TOO MUCH U GET VERY FAT 
+https://www.ferryhalim.com/orisinal/g3/casanova.htm (and my fav game to play when i’m sad cause the song felt abit too stupid oopses)`,
       audio: "media/sad-letter2.m4a" },
     { label: "letter 3", text: `hello dear!! m not q sure if ure feeling sad today because of me… HOPEFULLY NOT but i’m assuming in the 4 months ure gone we would fight at least once right HAHAHAHA IF URE NOT maybe u shd close this and read another msg!!! maybe u wont open my letter when ure upset w me… but regardless!! i would just like to say that when we r living miles apart but fighting, it’s prob even harder for u to Feel my love 🤣 so ull prob be focusing on all the unhappiness!!! and i might not remember to tell u that i love u and care for u, so i’m telling it to u rn!! please always remember that!!! at the end of the day i do believe that we r not each other’s enemy 😁
 
@@ -96,7 +97,9 @@ https://maps.app.goo.gl/rwzjeaByvkrS1qmu8
 3. https://youtube.com/shorts/9EuWNhSzvCk?is=m3Rzs2J9Q81p5vmy not asian but it looks gooddd
 
 4. https://vt.tiktok.com/ZSqM2tHm5/ mayb tiktok isnt the best place for recipes but ive alw wanted to make this ifl it’s idiotproof 
-5. https://vt.tiktok.com/ZSqMjsKJu/ round 2 for our oyakodon` },
+5. https://vt.tiktok.com/ZSqMjsKJu/ round 2 for our oyakodon
+
+6. https://vt.tiktok.com/ZSqr4wX81/ i might have lost sight of the plot oops this is also not asian but looks good` },
     { label: "letter 3", text: `here’s a link to the singapore mrt map game heheh that you’re so damn good at 🤣🤣 a little piece of sg!!
 https://www.sporcle.com/games/yellowflip999/fill-the-singapore-mrt-map
 ` },
@@ -110,9 +113,7 @@ https://www.sporcle.com/games/yellowflip999/fill-the-singapore-mrt-map
     { label: "ni", text: `YAYY fireworks for you HEHEH i’m glad today has been a Good Day!!! do tell me more i miss your yaps heheh i hope everyday continues to be a GOOD GOOD DAY! kissies from 100000km away heheh bluetooth connected!!!`, effect: "fireworks" },
     { label: "san", text: `HELLOOO i realised it’s quite hard to reply to your happiness when i have no idea what’s making you happy! why did i create this section 🤣🤣 BUT YAYYYYY 😃😄😁😆 on the spectrum of happy faces which one r u!! HAHAHA okie im glad ure in a great mood heheh as alw share ur happy w me
 https://vt.tiktok.com/ZSqYvs2oK/
-(hehe shall we try this)` },
-    { label: "yon", text: `REPLACE` },
-    { label: "go", text: `REPLACE` }
+(hehe shall we try this)` }
   ],
 
   general: [
