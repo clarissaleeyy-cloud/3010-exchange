@@ -739,6 +739,18 @@ html,body{
 }
 .letter-photo{ width: 100%; border-radius: 8px; display: block; }
 .letter-audio{ width: 100%; }
+.media-missing{
+  font-family: var(--sf);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #a8503f;
+  background: rgba(201,75,59,0.08);
+  border: 1px dashed rgba(201,75,59,0.4);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 0;
+}
+
 .letter-video{
   width: 100%;
   border-radius: 8px;

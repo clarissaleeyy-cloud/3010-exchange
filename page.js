@@ -13,9 +13,12 @@ const CONFIG = {
   // "day-first" reads it as 8 September. "month-first" reads it as 9 August.
   DATE_ORDER: "day-first",
 
-  // Which month the calendar opens on. Months are 0-indexed: 7 = August.
+  // Which month the calendar opens on.
+  // "current" follows today's date in his timezone. To pin it to one fixed
+  // month instead, set this to "fixed" and use the two values below.
+  CALENDAR_OPEN_ON: "current",
   CALENDAR_START_YEAR: 2026,
-  CALENDAR_START_MONTH: 7, // August
+  CALENDAR_START_MONTH: 7, // months are 0-indexed, so 7 = August
 
   // Free, no-signup shared counter for the "send love" button.
   // Change LOVE_NAMESPACE to something unique to you two so your count
@@ -508,7 +511,17 @@ async function loadNotes(){
 }
 
 // ═════════════════════════ calendar (now on the home page) ═════════════════════════
-let calendarMonth = new Date(CONFIG.CALENDAR_START_YEAR, CONFIG.CALENDAR_START_MONTH, 1);
+function initialCalendarMonth(){
+  if (CONFIG.CALENDAR_OPEN_ON === 'current'){
+    // "this month" means his month — the site is written from his side
+    const [y, m] = new Intl.DateTimeFormat('en-CA', {
+      timeZone: CONFIG.HIS_TIMEZONE, year: 'numeric', month: '2-digit'
+    }).format(new Date()).split('-');
+    return new Date(+y, +m - 1, 1);
+  }
+  return new Date(CONFIG.CALENDAR_START_YEAR, CONFIG.CALENDAR_START_MONTH, 1);
+}
+let calendarMonth = initialCalendarMonth();
 
 function dateKey(d){
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
@@ -894,6 +907,9 @@ document.getElementById('home-link').addEventListener('click', () => {
 
 // ═════════════════════════ mood grid ═════════════════════════
 const MOODS = ['surprise', 'sad', 'homesick', 'happy', 'general'];
+
+// which mood the currently open letter belongs to — read by "seal it back up"
+let lastLetterSource = null;
 const moodGrid = document.getElementById('mood-grid');
 MOODS.forEach(mood => {
   const btn = document.createElement('button');
@@ -922,31 +938,118 @@ MOODS.forEach(mood => {
   moodGrid.appendChild(btn);
 });
 
-function openSurprise(){
-  // draws from the "surprise" list in messages.js; if that's empty it
-  // falls back to picking any letter from any mood
-  const pool = (typeof MOOD_MESSAGES === 'undefined') ? []
-    : (MOOD_MESSAGES.surprise && MOOD_MESSAGES.surprise.length
-        ? MOOD_MESSAGES.surprise
-        : Object.values(MOOD_MESSAGES).flat());
-  const allLetters = pool;
-  if (!allLetters.length) return;
+// ─── the surprise pile ───────────────────────────────────────────────
+// Each tap on "it's a surprise!" opens one letter he hasn't seen before,
+// picked at random from the ones still sealed. Nothing on screen gives away
+// how many are left. Once a letter has been opened it joins the envelope
+// page, where the letters are numbered in the order he found them — so the
+// count only ever grows and never hints at the total.
 
-  const pick = allLetters[Math.floor(Math.random() * allLetters.length)];
+const SURPRISE_STORE = 'surpriseRevealed';
 
-  document.getElementById('envelopes-title').textContent = `surprise! here's one for you \u2014`;
+function surpriseLetters(){
+  return (typeof MOOD_MESSAGES !== 'undefined' && MOOD_MESSAGES.surprise) || [];
+}
+
+// stored as a list of indexes into MOOD_MESSAGES.surprise, in reveal order
+function getRevealed(){
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem(SURPRISE_STORE)) || []; }
+  catch (err){ saved = []; }
+  const count = surpriseLetters().length;
+  // drop anything that no longer exists, in case letters were edited later
+  return saved.filter((i, pos) => Number.isInteger(i) && i >= 0 && i < count && saved.indexOf(i) === pos);
+}
+
+function saveRevealed(list){
+  try { localStorage.setItem(SURPRISE_STORE, JSON.stringify(list)); }
+  catch (err){ console.error('Could not remember which surprises were opened:', err); }
+}
+
+// Shows one surprise letter on its own, with no envelope grid above it.
+function showSurpriseLetter(letter, animate){
+  document.getElementById('envelopes-title').textContent = 'a surprise, just for you \u2014';
   const bubble = document.getElementById('mood-speech-bubble');
   if (bubble) bubble.hidden = true;
 
   document.getElementById('envelope-grid').innerHTML = '';
-  document.getElementById('letter-text').innerHTML = formatLetterText(pick.text);
-  renderLetterMedia(pick);
+  document.getElementById('letter-text').innerHTML = formatLetterText(letter.text);
+  renderLetterMedia(letter);
   document.getElementById('letter-reveal').hidden = false;
+  lastLetterSource = 'surprise';
 
-  if (pick.effect === 'hearts') spawnHearts();
-  if (pick.effect === 'fireworks') spawnFireworks();
+  if (letter.effect === 'hearts') spawnHearts();
+  if (letter.effect === 'fireworks') spawnFireworks();
 
-  transitionToView('view-envelopes');
+  if (animate) transitionToView('view-envelopes');
+  else showView('view-envelopes');
+}
+
+// The collection of everything he's already opened.
+function openSurpriseGrid(animate){
+  const letters = surpriseLetters();
+  const revealed = getRevealed();
+
+  document.getElementById('envelopes-title').textContent = revealed.length
+    ? 'the surprises you\u2019ve found so far'
+    : 'no surprises opened yet \u2014 go tap the seal!';
+  const bubble = document.getElementById('mood-speech-bubble');
+  if (bubble) bubble.hidden = true;
+
+  const grid = document.getElementById('envelope-grid');
+  grid.innerHTML = '';
+  document.getElementById('letter-reveal').hidden = true;
+  lastLetterSource = 'surprise';
+
+  revealed.forEach((letterIndex, position) => {
+    const letter = letters[letterIndex];
+    const btn = document.createElement('button');
+    btn.className = 'envelope is-opened';
+
+    const img = document.createElement('img');
+    img.src = 'icons/envelope.svg';
+    img.alt = 'an opened envelope';
+
+    const label = document.createElement('span');
+    // numbered by when he found it, not by its position in messages.js
+    label.textContent = `letter ${position + 1}`;
+
+    btn.appendChild(img);
+    btn.appendChild(label);
+    btn.addEventListener('click', () => {
+      document.getElementById('letter-text').innerHTML = formatLetterText(letter.text);
+      renderLetterMedia(letter);
+      document.getElementById('letter-reveal').hidden = false;
+      document.getElementById('letter-reveal').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (letter.effect === 'hearts') spawnHearts();
+      if (letter.effect === 'fireworks') spawnFireworks();
+    });
+    grid.appendChild(btn);
+  });
+
+  if (animate) transitionToView('view-envelopes');
+  else showView('view-envelopes');
+}
+
+function openSurprise(){
+  const letters = surpriseLetters();
+  if (!letters.length) return;
+
+  const revealed = getRevealed();
+  const stillSealed = letters
+    .map((_, i) => i)
+    .filter(i => revealed.indexOf(i) === -1);
+
+  // everything has been found — go straight to the collection
+  if (!stillSealed.length){
+    openSurpriseGrid(true);
+    return;
+  }
+
+  const pick = stillSealed[Math.floor(Math.random() * stillSealed.length)];
+  revealed.push(pick);
+  saveRevealed(revealed);
+  showSurpriseLetter(letters[pick], true);
 }
 
 // ═════════════════════════ letter content helpers ═════════════════════════
@@ -978,35 +1081,68 @@ function asList(value){
   return Array.isArray(value) ? value.filter(Boolean) : [value];
 }
 
+// File names are the single most common thing to get wrong: a photo saved as
+// .jpeg but written as .jpg, or .PNG from a phone written as .png. Rather than
+// showing a broken icon, try the usual variants of the same name, and if none
+// of them exist say so in plain words with the exact path it looked for.
+const EXT_TRIES = {
+  photo: ['.png', '.PNG', '.jpg', '.JPG', '.jpeg', '.JPEG', '.gif', '.webp', '.heic', '.HEIC'],
+  video: ['.mov', '.MOV', '.mp4', '.MP4', '.m4v', '.webm'],
+  audio: ['.m4a', '.M4A', '.mp3', '.MP3', '.wav', '.aac', '.ogg']
+};
+
+function withFallback(el, src, kind, wrap){
+  const base = src.replace(/\.[^./]+$/, '');       // strip the extension, if any
+  const tries = EXT_TRIES[kind].filter(ext => base + ext !== src);
+  let i = 0;
+
+  el.addEventListener('error', () => {
+    if (i < tries.length){
+      el.src = base + tries[i++];
+      if (el.load) el.load();                       // video/audio need a nudge
+      return;
+    }
+    const note = document.createElement('p');
+    note.className = 'media-missing';
+    note.textContent =
+      `couldn't find "${src}" — check that the file is in the media folder ` +
+      `and that the name and extension match exactly (capital letters count).`;
+    el.replaceWith(note);
+    console.error(`Media not found: ${src} (also tried ${tries.map(e => base + e).join(', ')})`);
+  });
+}
+
 function renderLetterMedia(env){
   const wrap = document.getElementById('letter-media');
   wrap.innerHTML = '';
 
   asList(env.photo).concat(asList(env.photos)).forEach((src, i, all) => {
     const img = document.createElement('img');
-    img.src = src;
-    img.loading = 'lazy';
     img.alt = all.length > 1 ? `photo ${i + 1} of ${all.length} for you` : 'a photo for you';
     img.className = 'letter-photo';
+    withFallback(img, src, 'photo', wrap);
+    img.src = src;
     wrap.appendChild(img);
   });
 
   asList(env.video).concat(asList(env.videos)).forEach(src => {
     const video = document.createElement('video');
-    video.src = src;
     video.controls = true;
     video.playsInline = true;
     video.preload = 'metadata';
     video.className = 'letter-video';
+    withFallback(video, src, 'video', wrap);
+    video.src = src;
     wrap.appendChild(video);
   });
 
   asList(env.audio).concat(asList(env.audios)).forEach(src => {
     const audio = document.createElement('audio');
-    audio.src = src;
     audio.controls = true;
     audio.preload = 'metadata';
     audio.className = 'letter-audio';
+    withFallback(audio, src, 'audio', wrap);
+    audio.src = src;
     wrap.appendChild(audio);
   });
 }
@@ -1024,6 +1160,7 @@ function openMood(mood){
   const grid = document.getElementById('envelope-grid');
   grid.innerHTML = '';
   document.getElementById('letter-reveal').hidden = true;
+  lastLetterSource = mood;
 
   const envelopes = (typeof MOOD_MESSAGES !== 'undefined' && MOOD_MESSAGES[mood]) || [];
   envelopes.forEach((env, idx) => {
@@ -1058,6 +1195,13 @@ function openMood(mood){
 document.getElementById('close-letter').addEventListener('click', () => {
   playSealSwim(() => {
     document.getElementById('letter-reveal').hidden = true;
+    // the seal was the transition, so switch views directly rather than
+    // playing the golf shot on top of it
+    if (lastLetterSource === 'surprise'){
+      openSurpriseGrid(false); // land on the collection, now one letter richer
+    } else {
+      showView('view-mood');
+    }
   });
 });
 
